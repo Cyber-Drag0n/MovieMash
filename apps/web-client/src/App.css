@@ -1,0 +1,997 @@
+/* Hero: фон только на главной. Низкий z-index — он будет под header */
+.home-hero {
+  width: 100%;
+  height: 860px;
+  background-image: url('/Home1.png');
+  background-position: center;
+  background-size: cover;
+
+  position: relative;
+  z-index: 0;
+}
+
+/* Контент страницы */
+.page-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+.TextContainer {
+  text-align: center;      /* по центру */
+  max-width: 1100px;       /* ограничение ширины строки */
+  margin: 0 auto;          /* центр контейнера */
+  padding: 10px;
+}
+
+.TextContainer h1 {
+  margin: 0 0 16px 0;
+  font-size: 40px;
+  color: #FFFFFF;  /* можешь изменить */
+}
+
+.TextContainer h2 {
+  margin: 0;
+  color: rgba(153, 153, 153, 1);
+  font-size: 15px;       /* можешь изменить */
+}
+
+.cta-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  object-fit: contain;
+}
+
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(229, 0, 0, 1);
+  color: #FFFFFF;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 8px;
+  padding: 15px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+  outline: none;
+  white-space: nowrap;
+}
+
+.cta-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+}
+
+/* центрируем кнопку — применимо к твоей текущей разметке */
+.cta-wrapper {
+  width: 100%;               /* чтобы занимал всю ширину центрального контейнера */
+  display: flex;
+  justify-content: center;   /* центр по горизонтали */
+  margin-top: 24px;          /* отступ сверху */
+}
+/* ---- Секция категорий ---- */
+.categories-section {
+  margin-top: 48px;
+  margin-bottom: 80px;
+  padding: 0 24px;
+  color: #fff;
+}
+
+/* Заголовок и контролы */
+.categories-head {
+  display: flex;
+  align-items: flex-start;     /* выравниваем по верху, но контролу зададим центровку отдельно */
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+/* Левая колонка: заголовок + подпись (h2) под ним */
+.categories-left {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;              /* левая колонка занимает доступное пространство */
+  min-width: 0;                /* важно для корректного переноса текста в flex */
+}
+
+/* Заголовок */
+.categories-title {
+  margin-bottom: -20px;
+  font-size: 28px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+/* Подпись под заголовком (теперь снизу) */
+.categories-under {
+  margin: 0;
+  font-size: 14px;             /* можно подправить */
+  font-weight: 300;
+  color: rgba(153, 153, 153, 1);
+  line-height: 1.4;
+  max-width: 900px;            /* ограничение ширины для читаемости */
+}
+
+/* Контролблок — стрелки + линия (правый столбец) */
+.categories-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  align-self: center;          /* центрируем контрол по высоте левой колонки */
+}
+
+
+/* стилизованные стрелки */
+.ctrl-arrow {
+  background: #0F0F0F;
+  border: 1px solid #1F1F1F;
+  color: #fff;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+}
+
+.ctrl-arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+/* линия-сегменты: показываем N сегментов (pages) */
+.progress-line {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 10px;
+  background: rgba(0,0,0,0.25);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.03);
+  min-width: 120px;
+  justify-content: center;
+}
+
+.progress-seg {
+  width: 28px;
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.progress-seg.active {
+  background: linear-gradient(90deg, rgba(229, 0, 0, 1), #380000);
+}
+
+/* --- слайдер --- */
+.categories-slider-viewport {
+  overflow: hidden;
+  width: 100%;
+}
+
+.categories-slider {
+  display: flex;
+  width: 100%;
+  transition: transform 420ms cubic-bezier(.2,.9,.3,1);
+}
+
+/* каждая "страница" занимает 100% ширины вьюпорта */
+.cards-page {
+  display: flex;
+  gap: 22px;
+  padding: 8px 0;
+  min-width: 100%;
+  box-sizing: border-box;
+  justify-content: flex-start;
+}
+
+/* карточка категории — стиль как на скрине */
+.category-card {
+  width: calc((1200px - 4 * 22px) / 5); /* вычислено под max-width:1200; если нужно можно заменить fixed % */
+  max-width: 220px;
+  min-width: 160px; /* гарантируем минимальную ширину */
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
+  border-radius: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255,255,255,0.02);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* внутренняя сетка постеров 2x2 */
+.poster-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* заглушки-постеры — замени background-image на реальные пути, если нужно */
+.poster {
+  width: 100%;
+  height: 90px;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  filter: saturate(.9) contrast(.9);
+}
+
+/* примеры градиентов-заполнения — можешь заменить на img внутри блока */
+.poster-1 { background: linear-gradient(135deg,#2a2a2a,#1b1b1b); }
+.poster-2 { background: linear-gradient(135deg,#191919,#0f0f0f); opacity: 0.95; }
+.poster-3 { background: linear-gradient(135deg,#292929,#111111); }
+.poster-4 { background: linear-gradient(135deg,#222,#151515); }
+
+/* футер карточки: название + стрелка */
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cat-title {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.cat-go {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  opacity: 0.9;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* адаптив: под маленькие ширины уменьшаем количество карточек и ширины */
+@media (max-width: 1200px) {
+  .category-card { width: calc((100% - 4 * 16px) / 4); }
+}
+@media (max-width: 992px) {
+  .category-card { width: calc((100% - 3 * 12px) / 3); }
+}
+@media (max-width: 640px) {
+  .cards-page { gap: 12px; }
+  .category-card { width: 45%; min-width: 140px; }
+  .poster { height: 70px; }
+  .progress-seg { width: 18px; }
+  .progress-line { min-width: 80px; }
+}
+
+/* FAQ section */
+.faq-section {
+  margin: 60px 24px;
+  color: #fff;
+}
+
+/* head: заголовок слева, кнопка справа */
+.faq-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.faq-left {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.faq-title {
+  margin: 0 0 8px 0;
+  color: #fff;
+  font-size: 32px;
+  font-weight: 400;
+}
+
+.faq-sub {
+  margin: 0;
+  font-size: 14px;             /* можно подправить */
+  font-weight: 300;
+  color: rgba(153, 153, 153, 1);
+  line-height: 1.4;
+  max-width: 900px;
+}
+
+/* правая кнопка (спросить вопрос) */
+.faq-action .ask-btn,
+.ask-btn {
+  background: #E81212; /* красная/оранжевая кнопка — в примере была красная */
+  border: none;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 300;
+}
+
+/* grid с двумя колонками для списка */
+.faq-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+/* каждый столбец — вертикальный список */
+.faq-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* отдельный аккордеон-элемент */
+.faq-item {
+  padding: 18px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+/* строка с номером, вопросом и кнопкой */
+.faq-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* номер в квадрате */
+.num-badge {
+  min-width: 44px;
+  height: 44px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 300;
+}
+
+/* вопрос — выглядит как заголовок, не менять шрифт */
+.faq-question {
+  flex: 1 1 auto;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 100;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* кнопка плюс/минус — теперь рисуется CSS-полосками (псевдоэлементами) */
+.toggle-btn {
+  position: relative;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  /* скрываем текст внутри (если он есть) и делаем элемент доступным для скринридеров через aria-label) */
+  color: transparent;
+  font-size: 0;
+  line-height: 0;
+}
+
+/* общая линия — горизонтальная и вертикальная (тонкие полоски) */
+.toggle-btn::before,
+.toggle-btn::after {
+  content: "";
+  position: absolute;
+  background: #FFFFFF;       /* цвет линий */
+  border-radius: 1px;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+/* горизонтальная полоса (минус) */
+.toggle-btn::before {
+  width: 14px;
+  height: 2px;              /* толщина линии — подправь, если нужно тоньше */
+  transform: translateY(0);
+}
+
+/* вертикальная полоса (чтобы получилось плюс) */
+.toggle-btn::after {
+  width: 2px;               /* толщина вертикали */
+  height: 14px;
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* состояние "открыто" — превращаем плюс в минус (скрываем вертикальную полосу) */
+.toggle-btn[aria-expanded="true"]::after {
+  opacity: 0;
+  transform: scaleY(0.8);
+}
+
+/* hover/active эффекты — легкое осветление полос */
+.toggle-btn:hover::before,
+.toggle-btn:hover::after {
+  background: #FFFFFF;
+  opacity: 0.95;
+}
+
+/* если хочешь ещё тоньше плюс — уменьшите height для ::before/::after (1px) */
+
+
+
+.faq-answer {
+  margin-top: 12px;
+  color: rgba(153,153,153,1);
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 900px;
+  white-space: pre-line;
+}
+
+/* адаптив: одна колонка на узких экранах */
+@media (max-width: 900px) {
+  .faq-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* ТАРИФНЫЕ ПЛАНЫ */
+/* ====== Plans section ====== */
+.plans-section {
+  margin: 60px 24px;
+  color: #fff;
+}
+
+.plans-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.plans-title {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 400;
+  color: #fff;
+}
+
+.plans-sub {
+  margin: 0;
+  font-size: 14px;             /* можно подправить */
+  font-weight: 300;
+  color: rgba(153, 153, 153, 1);
+  line-height: 1.4;
+  max-width: 900px;;
+}
+
+/* ---------- Billing toggle: большой контейнер + крупные кнопки ---------- */
+.billing-toggle {
+  display: flex;
+  gap: 16px;
+  padding: 6px;               /* как было */
+  border-radius: 12px;        /* как было */
+  background: #0A0A0A;
+  border: 2px solid rgba(255,255,255,0.03);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.45);
+}
+
+.billing-btn {
+  border: none;
+  background: transparent;
+  color: #B5B5B5;             /* <-- было white */
+  padding: 10px 20px;         /* как было */
+  font-size: 14px;            /* как было */
+  font-weight: 400;           /* <-- уменьшил жирность */
+  border-radius: 8px;         /* как было */
+  cursor: pointer;
+  transition: .15s ease;
+}
+
+.billing-btn.active {
+  background: #1A1A1A;        /* <-- плитка */
+  color: #FFF;                /* <-- сделал белым */
+  box-shadow: inset 0 -4px 10px rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.03);
+}
+
+
+/* Активный/hover эффекты для удобства */
+.billing-btn:hover { color: #FFFFFF; }
+.billing-btn:focus { outline: none; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.02); }
+
+/* Grid of cards */
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 18px;
+}
+
+/* Card */
+.plan-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(0,0,0,0.03));
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,0.02);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+  transition: transform .12s ease, border-color .12s ease;
+}
+.plan-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255,255,255,0.04);
+}
+.plan-card.selected {
+  border-color: rgba(255,106,0,0.6);
+  box-shadow: 0 12px 30px rgba(255,106,0,0.06);
+}
+
+/* inner layout */
+/* Убедимся, что карточки идентичной высоты по содержимому,
+   и кнопки остаются внизу (выровнены по одному уровню) */
+
+/* .plan-inner уже есть — удостоверимся, что он flex column */
+.plan-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Задаём минимальную высоту описания — подгони значение при желании.
+   Это ключ к тому, чтобы кнопки не "улетали" вверх/вниз. */
+.plan-desc {
+  margin: 10px 0 18px 0;
+  color: rgba(153,153,153,1);
+  font-size: 14px;
+  line-height: 1.4;
+
+
+  /* главное изменение: даём минимальную высоту, чтобы все карточки выравнивались */
+  min-height: 64px; /* попробуй 64px/72px/80px — я поставил 64, подгони под макет */
+}
+
+/* plan-price — оставляем как маркер перед кнопками */
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 18px;
+  font-size: 20px;
+}
+
+/* actions — уже стояли внизу, но подстрахую: */
+.plan-actions {
+  margin-top: auto; /* push to bottom — гарантирует одинаковый уровень кнопок */
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+
+.trial-btn {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 400;
+  font-size: 14px;
+}
+
+.choose-btn {
+  background: #e61212; /* яркая кнопка */
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 400;
+  font-size: 14px;
+}
+
+/* РЕКЛАМНЫЙ БАННЕР */
+
+.ad-banner {
+  width: 100%;
+  background-image: url("/ad.png");
+  background-size: cover;
+  background-position: center;
+  border-radius: 14px;
+  margin: 40px auto;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* затемнение сверху изображения */
+.ad-overlay {
+  width: 100%;
+  height: 100%;
+  backdrop-filter: brightness(0.65);
+  padding: 40px 50px;
+}
+
+.ad-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+}
+
+.ad-text {
+  max-width: 70%;
+}
+
+.ad-title {
+  font-size: 30px;
+  font-weight: 400;
+  margin: 0 0 12px 0;
+  color: #fff;
+}
+
+.ad-sub {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 200;
+  color: rgba(255,255,255,0.8);
+}
+
+.ad-btn {
+  background: #e50914;
+  border: none;
+  padding: 14px 26px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+  font-weight: 400;
+  white-space: nowrap;
+  transition: 0.2s ease;
+}
+
+.ad-btn:hover {
+  background: #b50710;
+}
+
+/* FOOTER */
+
+/* --- layout для "липкого" футера --- */
+html, body, #root {
+  height: 100%;
+  margin: 0; /* чтобы не было никаких внешних отступов */
+}
+
+/* главный контейнер уже у тебя <main> в App.jsx — делаем его флекс-колонкой */
+main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* чтобы можно было приклеить футер к низу при небольшой высоте контента */
+}
+
+/* основной контент тянется, занимает всё пространство между header и footer */
+.page-content {
+  flex: 1 0 auto; /* растягиваемся, чтобы толкнуть футер вниз */
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+/* --- FOOTER: фон растягивается во всю ширину окна --- */
+.site-footer {
+  width: 100%;
+  /* если хочешь абсолютное перекрытие ширины (когда есть scrollbars), можно использовать 100vw, но это иногда вызывает горизонтальный скролл
+     поэтому оставляем width:100% и обнуляем боковые отступы */
+  background: #0b0b0b;
+  color: #bdbdbd;
+
+  /* боковых отступов не должно быть — только сверху/снизу */
+  padding: 46px 0;   /* 46px сверху/снизу, но по бокам — 0 */
+
+  border-top: 1px solid rgba(255,255,255,0.02);
+  margin-top: 60px; /* если нужен отступ сверху — оставляем, иначе обнули */
+  box-sizing: border-box;
+}
+
+/* внутренняя "табличка" (контент) — центрируется и не растягивается до краёв */
+.footer-inner {
+  max-width: 1200px;   /* согласовано с .page-content */
+  margin: 0 auto;      /* центрируем внутри full-bleed блока */
+  padding: 0 16px;     /* горизонтальные паддинги только внутри контента (не на фоне) */
+  box-sizing: border-box;
+}
+
+/* оставляем остальной CSS футера без изменений (можно присоединить из твоей версии) */
+.footer-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 28px;
+  align-items: start;
+  margin: 0;
+}
+
+.footer-col { min-width: 0; }
+
+.footer-title {
+  margin: 0 0 14px 0;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.footer-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-weight: 400;
+}
+
+.footer-list a {
+  color: rgba(189,189,189,0.6);
+  text-decoration: none;
+  font-weight: 400;
+  font-size: 15px;
+  transition: color .12s ease, transform .12s ease;
+  display: inline-block;
+}
+
+.footer-list a:hover,
+.footer-list a:focus {
+  color: rgba(189,189,189,0.95);
+  transform: translateX(4px);
+}
+
+.footer-contact .footer-title { margin-bottom: 18px; }
+
+.social-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.social-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.03);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+  text-decoration: none;
+  color: #fff;
+  transition: transform .12s ease, background .12s ease;
+}
+
+.social-btn:hover,
+.social-btn:focus {
+  transform: translateY(-3px);
+  background: rgba(255,255,255,0.03);
+}
+
+.social-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+
+/* адаптив */
+@media (max-width: 1100px) {
+  .footer-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 700px) {
+  .footer-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .site-footer { padding: 30px 0; }
+  .footer-title { font-size: 16px; }
+  .social-btn { width: 44px; height: 44px; border-radius: 10px; }
+}
+
+@media (max-width: 420px) {
+  .footer-grid { grid-template-columns: 1fr; }
+  .footer-copy { justify-content: center; padding-top: 14px; font-size: 12px; }
+}
+
+
+/* СТРАНИЦА ФИЛЬМЫ И СЕРИАЛЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫ */
+/* ------------------ Movies & Series: минимальные отступы, ровные стрелки ------------------ */
+
+.ms-page {
+  width: 100%;
+  background: rgba(20,20,20,1);
+  position: relative;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+/* Блок героя: минимальные отступы */
+.ms-hero {
+  position: relative;
+  width: calc(100% - 5px);
+  margin: 10px auto;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  box-sizing: border-box;
+  aspect-ratio: 1594 / 835;
+  min-height: 680px; /* уменьшил минимальную высоту */
+  max-width: calc(100% - 5px); /* ограничиваем максимальную ширину */ }
+
+/* фон — реальное <img>, object-fit: cover для аккуратного заполнения */
+.ms-bg-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 1;
+  display: block;
+  transform: translateZ(0);
+  filter: saturate(.98) contrast(.96);
+}
+
+/* затемнение для читаемости текста */
+.ms-hero-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+          180deg,
+          rgba(0,0,0,0.12) 0%,
+          rgba(0,0,0,0.32) 28%,
+          rgba(0,0,0,0.68) 62%,
+          rgba(0,0,0,0.92) 100%
+  );
+}
+
+/* Навигационные стрелки - смещены вниз */
+.ms-hero-arrow {
+  position: absolute;
+  top: 95%; /* Сместили вниз с 50% до 60% */
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: rgba(10,10,10,0.85);
+  color: #fff;
+  font-size: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 6;
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: transform .12s ease, background .12s ease;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.85);
+  line-height: 0;
+  will-change: transform;
+  padding: 0; /* Убираем внутренние отступы */
+}
+.ms-hero-arrow.left  { left: 12px; }
+.ms-hero-arrow.right { right: 12px; }
+.ms-hero-arrow:focus { outline: none; box-shadow: 0 0 0 4px rgba(232,18,18,0.08); }
+.ms-hero-arrow:hover { transform: translateY(-50%) scale(1.05); background: rgba(20,20,20,0.95); }
+
+/* Стиль для иконок стрелок */
+.ms-hero-arrow img {
+  width: 20px; /* Размер иконки */
+  height: 20px;
+  object-fit: contain;
+}
+
+/* центральный контент — ближе к низу, но можно подправить bottom */
+.ms-hero-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  width: 100%;
+  max-width: 920px;
+  padding: 0 6px;
+  text-align: center;
+  bottom: 90px;
+}
+
+
+/* заголовок/описание — компактнее */
+.ms-hero-title {
+  font-size: 40px;
+  font-weight: 400;
+  margin-bottom: 8px; /* уменьшил с 48px до 8px */
+  color: #fff;
+  line-height: 1.08;
+  text-shadow: 0 4px 16px rgba(0,0,0,0.8);
+}
+.ms-hero-desc {
+  margin: 0 auto 24px;
+  max-width: 720px;
+  color: rgba(153, 153, 153, 1);
+  font-size: 14px;
+  font-weight: 100;
+}
+
+/* кнопки — плотнее, одинаковый визуальный ритм */
+.ms-hero-actions { display:inline-flex; gap:8px; align-items:center; justify-content:center; margin-top:6px; }
+.ms-btn { border: none; cursor: pointer; display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:6px; font-weight:300; font-size:14px; background:transparent; color:#fff;  }
+.ms-btn-play { background: linear-gradient(180deg,#e81212,#b20808); box-shadow: 0 8px 24px rgba(232,18,18,0.2); padding:10px 14px; }
+.ms-btn-watch { background: linear-gradient(180deg,#e81212,#b20808); box-shadow: 0 8px 24px rgba(232,18,18,0.2); padding:8px 14px; }
+.ms-btn-icon { width:16px; height:16px; object-fit:contain; display:block; }
+.ms-btn-circle { width:38px; height:38px; padding:0; border-radius:8px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); display:inline-flex; align-items:center; justify-content:center; }
+.ms-btn-small-icon { width:15px; height:15px; object-fit:contain; display:block; }
+
+/* индикаторы — компактные и ниже контента */
+.ms-hero-indicators {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display:flex;
+  gap:6px;
+  z-index:6;
+}
+.ms-ind-dot { width:28px; height:3px; border-radius:3px; background: rgba(255,255,255,0.08); border:none; }
+.ms-ind-dot.active { background: linear-gradient(90deg,#e50000,#550000); transform:scaleX(1.1); }
+
+/* минимальные отступы для нижнего контента */
+.ms-section-content { max-width:1200px; margin:20px auto 60px; padding:0 12px; box-sizing:border-box; background:transparent; }
+
+/* адаптивы — поджимать аккуратно */
+@media (max-width:1200px) {
+  .ms-hero { width: calc(100% - 20px); margin:10px auto; min-height: 380px; }
+  .ms-hero-center { bottom: 46px; padding: 0 10px; }
+  .ms-hero-title { font-size:36px; }
+}
+@media (max-width:900px) {
+  .ms-hero { width: calc(100% - 16px); margin:8px auto; aspect-ratio: auto; min-height: 320px; border-radius:6px; }
+  .ms-hero-center { bottom: 40px; padding: 0 8px; }
+  .ms-hero-title { font-size:30px; }
+  .ms-hero-arrow { width:36px; height:36px; font-size:18px; }
+  .ms-hero-arrow.left { left:6px; }
+  .ms-hero-arrow.right { right:6px; }
+}
+@media (max-width:480px) {
+  .ms-hero { width: calc(100% - 12px); margin:6px auto; min-height: 260px; }
+  .ms-hero-title { font-size:22px; }
+  .ms-hero-desc { display:block; font-size:11px; }
+  .ms-hero-arrow { width:32px; height:32px; font-size:16px; }
+  .ms-hero-arrow.left { left:4px; }
+  .ms-hero-arrow.right { right:4px; }
+  .ms-section-content { margin:12px auto 30px; padding: 0 6px; }
+}
+.section-badge{
+  color: #e50000;
+}

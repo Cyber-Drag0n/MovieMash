@@ -1,0 +1,70 @@
+.topbar {
+    position: fixed;
+    top: 16px;
+    left: 32px;
+    right: 32px;
+    z-index: 50;             /* должен быть выше, чем у hero */
+    pointer-events: auto;
+    background: transparent; /* прозрачный, чтобы фон был виден под ним */
+}
+
+/* Внутренняя обёртка: логотип слева, нав по центру, иконки справа */
+.header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    padding: 8px 15px;
+    border-radius: 12px;
+    /* не задаём background здесь — он прозрачный */
+}
+
+/* прочие стили логотипа/навигации/иконок — как были */
+.left-group { display: flex; align-items: center; }
+.logo-link { display: inline-flex; align-items: center; text-decoration: none; }
+.logo {
+    height: 45px;
+    width: auto;
+}
+
+/* Нав-плитка */
+.button-container {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 7px 30px;
+    border-radius: 12px;
+    background: #0F0F0F;
+    border: 4px solid #1F1F1F;
+    white-space: nowrap;
+}
+
+.nav-button {
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: #BFBFBF;
+    transition: color 0.15s, background 0.15s, transform 0.08s;
+}
+
+.nav-button:hover { color: #FFFFFF; transform: translateY(-1px); }
+.nav-button.active { background: #1A1A1A; color: #ffffff; }
+
+/* Иконки */
+.icons-container { display: flex; align-items: center; gap: 8px; }
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    text-decoration: none;
+    background: transparent;
+    cursor: pointer;
+}
+.icon-btn:hover { background: rgba(255,255,255,0.04); transform: translateY(-2px); }
+.icon-img { width: 20px; height: 20px; object-fit: contain; }
