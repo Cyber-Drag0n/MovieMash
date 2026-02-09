@@ -109,9 +109,9 @@
 
 /* Подпись под заголовком (теперь снизу) */
 .categories-under {
-  margin: 0;
+  margin: 20px 0 0;
   font-size: 14px;             /* можно подправить */
-  font-weight: 300;
+  font-weight: 400;
   color: rgba(153, 153, 153, 1);
   line-height: 1.4;
   max-width: 900px;            /* ограничение ширины для читаемости */
@@ -246,7 +246,7 @@
 
 .cat-title {
   color: #ffffff;
-  font-weight: 700;
+  font-weight: 400;
   font-size: 14px;
 }
 
@@ -992,6 +992,589 @@ main {
   .ms-hero-arrow.right { right:4px; }
   .ms-section-content { margin:12px auto 30px; padding: 0 6px; }
 }
-.section-badge{
-  color: #e50000;
+
+
+/* Стили для top-card (Топ-10 в) — чтобы выглядеть как у вас */
+.top-card {
+  width: 260px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
+
+.poster-wrap {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0a0a0a;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+}
+
+/* бейдж "Топ-10 в" */
+.top-badge {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 6;
+  background: #e50000;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-weight: 400;
+  font-size: 13px;
+}
+
+/* уменьшаем высоту маленькой poster-grid внутри top-card под новый размер */
+.top-card .poster-grid .poster {
+  height: 78px; /* визуально подогнал для top-card */
+}
+
+/* адаптив */
+@media (max-width: 1100px) {
+  .trends-row { gap: 14px; }
+  .trend-card { width: 190px; }
+  .trend-poster-wrap { width: 190px; height: 222px; }
+  .top-card { width: 220px; }
+}
+@media (max-width: 640px) {
+  .trends-row { gap: 12px; overflow-x: auto; padding-bottom: 12px; }
+  .trend-card { min-width: 160px; flex: 0 0 auto; }
+  .trend-poster-wrap { min-width: 160px; height: 190px; }
+}
+/* --------------------
+   Популярный Топ-10 по жанрам
+   (большие карточки — 4 в ряд на десктопе)
+   -------------------- */
+
+/* увеличенный вариант карточки для Top-10 (наследует .category-card) */
+.category-card.top-card {
+  /* 4 карточки в строке на ширине 1200 (учтены промежутки) */
+  width: calc((1200px - 3 * 32px) / 4);
+  max-width: 300px;      /* защищает от слишком широких блоков */
+  min-width: 220px;      /* защищает на узких экранах */
+  padding: 14px;         /* чуть больше внутреннего паддинга */
+  min-height: 320px;     /* увеличенная высота (больше контента) */
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
+  border: 1px solid rgba(255,255,255,0.02);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+}
+
+/* для top-card делаем постеры крупнее, внутри 2x2 сетки */
+.category-card.top-card .poster-grid {
+  gap: 10px;
+}
+.category-card.top-card .poster {
+  height: 120px; /* крупнее (вместо 120px у обычных карточек) */
+  border-radius: 8px;
+}
+
+/* обёртка для верхнего бейджа внутри карточки (позиционируется поверх постеров) */
+.category-card.top-card .poster-wrap {
+  position: relative;
+  /* чтобы .top-badge позиционировался относительно этой области */
+}
+
+/* Общий стиль для top-badge */
+.top-badge {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 6;
+  background: #e50000;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-weight: 400;
+  font-size: 13px;
+  transform: translateX(-15px); /* ← сдвигаем левее на 20px */
+  margin-top: 250px;
+}
+
+/* Для категорийной карточки */
+.category-card.top-card .top-badge {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 6;
+  background: #e50914;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 400;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+  transform: translateX(-15px); /* ← сдвигаем левее на 20px */
+}
+
+/* футер карточки (название + стрелка) — оставляем знакомый стиль */
+.category-card.top-card .card-footer {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* подпись названия — чуть крупнее для топ-блока */
+.category-card.top-card .cat-title {
+  font-size: 15px;
+  font-weight: 400;
+  color: #fff;
+}
+
+/* индикатор стрелка справа — оставляем ту же .cat-go */
+.category-card.top-card .cat-go {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+/* адаптивы: компактнее на tablet/mobile */
+@media (max-width: 1200px) {
+  .category-card.top-card {
+    width: calc((100% - 2 * 20px) / 3); /* 3 в ряд на средней ширине */
+    min-width: 200px;
+  }
+  .category-card.top-card .poster { height: 140px; }
+}
+
+@media (max-width: 900px) {
+  .category-card.top-card {
+    width: calc((100% - 1 * 12px) / 2); /* 2 в ряд на мобильном лендскейпе */
+    min-width: 160px;
+    padding: 12px;
+    min-height: 260px;
+  }
+  .category-card.top-card .poster { height: 120px; }
+}
+
+@media (max-width: 480px) {
+  .category-card.top-card {
+    width: 48%;
+    padding: 10px;
+    min-height: 240px;
+  }
+  .category-card.top-card .poster { height: 100px; }
+}
+
+/* ===== Trends: только постер + два овала (левый/правый) ===== */
+
+.trends-row {
+  display: flex;
+  gap: 22px;
+  align-items: flex-start;
+  padding-bottom: 8px;
+  overflow: hidden;
+}
+
+.trend-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* без текста под карточкой */
+  width: calc((1200px - 4 * 22px) / 5); /* 5 в ряд при контейнере 1200 */
+  max-width: 240px;
+  min-width: 160px;
+  padding: 0; /* внутренняя область пустая — только постер */
+  border-radius: 12px;
+  background: transparent; /* карточка визуально — фон контейнера, постер сам по себе */
+  /* минимальная тень/обводка, чтобы постеры «сидели» как карточки */
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* wrapper с фиксированным размером постера */
+.trend-poster-wrap {
+  position: relative;
+  width: 215px;
+  height: 262px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
+  padding: 12px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255,255,255,0.02);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+}
+
+/* сам постер — заполняет wrap */
+.trend-poster {
+  width: 100%;
+  height: 85%;
+  object-fit: cover;
+  display: block;
+  transform: translateZ(0);
+  transition: transform .18s ease, filter .18s ease;
+  background: linear-gradient(135deg,#2a2a2a,#1b1b1b);
+  border-radius: 12px;
+}
+
+/* лёгкий зум на hover */
+.trend-poster-wrap:hover .trend-poster {
+  transform: scale(1.02);
+  filter: brightness(1.03);
+}
+
+/* Общий стиль для бейджей (овалы) */
+.trend-badge {
+  position: absolute;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;                 /* чуть меньше внутреннего расстояния */
+  padding: 6px 8px;         /* уменьшенный padding */
+  border-radius: 999px;
+  background: rgba(10,10,10,0.85);
+  color: #fff;
+  font-weight: 400;
+  font-size: 12px;          /* уменьшенный шрифт */
+  border: 1px solid rgba(255,255,255,0.03);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.45);
+  z-index: 12;
+
+  /* предотвращаем накладывание бейджей: ограничиваем ширину каждого */
+  max-width: 40%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+}
+
+/* левый овал */
+.trend-badge.left {
+  left: 12px;
+}
+
+/* правый овал */
+.trend-badge.right {
+  right: 12px;
+}
+
+/* иконки внутри бейджа */
+.trend-badge img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  display: block;
+  opacity: 0.95;
+}
+
+/* текст бейджа — немного компактнее */
+.badge-text {
+  font-size: 12px;
+  color: #fff;
+  font-weight: 400;
+}
+
+/* отключаем любые подписи под карточкой (на всякий случай) */
+.trend-card .card-footer,
+.trend-card .cat-title {
+  display: none !important;
+}
+
+/* адаптивы: при узком экране делаем ряд скроллимым */
+@media (max-width: 1100px) {
+  .trends-row { gap: 14px; overflow-x: auto; padding-bottom: 12px; -webkit-overflow-scrolling: touch; }
+  .trend-card { flex: 0 0 auto; width: auto; min-width: 190px; }
+  .trend-poster-wrap { width: 190px; height: 220px; }
+}
+@media (max-width: 640px) {
+  .trend-card { min-width: 160px; }
+  .trend-poster-wrap { width: 160px; height: 185px; }
+  .trend-badge { padding: 6px 10px; font-size: 12px; }
+  .trend-badge img { width: 12px; height: 12px; }
+}
+
+/* ----- Новинки (похожи на category-card / trend-poster) ----- */
+
+/* карточка — теперь относительный контейнер, чтобы бейдж позиционировался относительно внешней рамки */
+.new-card {
+  position: relative; /* <- главное изменение */
+  width: calc((1200px - 4 * 22px) / 5);
+  height: 280px;
+  min-width: 160px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
+  border-radius: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255,255,255,0.02);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+/* wrapper под постер — внутри карточки */
+.new-poster-wrap {
+  position: relative;
+  width: 100%;
+  height: 215px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
+  padding: 0;
+  box-sizing: border-box;
+  border: 1px solid rgba(255,255,255,0.02);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+}
+
+/* картинка в постере */
+.new-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: translateZ(0);
+  transition: transform .18s ease, filter .18s ease;
+  border-radius: 10px;
+}
+
+/* ОБНОВЛЁННЫЙ бейдж — теперь позиционируется относительно .new-card (внешняя рамка) */
+.new-badge {
+  position: absolute;
+  bottom: 12px;
+  z-index: 8;                  /* над рамкой и картинкой */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(10,10,10,0.85);
+  color: #fff;
+  font-weight: 400;
+  font-size: 13px;
+  border: 1px solid rgba(255,255,255,0.03);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.5);
+}
+
+/* текст внутри бейджа */
+.new-badge-text { line-height: 1; font-size: 13px; color: #fff; }
+
+/* скрываем унаследованные подписи (если есть) */
+.new-card .card-footer,
+.new-card .cat-title,
+.new-card .cat-go { display: none !important; }
+
+/* адаптив */
+@media (max-width: 1100px) {
+  .new-card { width: 190px; }
+  .new-poster-wrap { height: 200px; }
+}
+@media (max-width: 640px) {
+  .new-card { width: 45%; min-width: 160px; }
+  .new-poster-wrap { height: 160px; }
+  .new-badge { padding: 6px 10px; font-size: 12px; }
+}
+.must-row {
+  display: flex;
+  gap: 22px;
+  align-items: flex-start;
+  padding-bottom: 8px;
+  overflow: hidden;
+}
+
+/* используем размер и рендер top-card, но делаем чуть короче высоту, чтобы визуально как на скриншоте */
+/* карточка — теперь relative, чтобы бейджи позиционировались по внешней рамке */
+.must-card {
+  position: relative; /* <- важно */
+  overflow: visible;  /* чтобы бейджи не обрезались за пределами рамки */
+}
+
+/* бейджи позиционируем относительно .must-card (внешней рамки) */
+.must-card .trend-badge {
+  position: absolute;
+  bottom: 12px;
+  z-index: 12;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;                /* чуть меньше промежутка внутри бейджа */
+  padding: 6px 8px;        /* уменьшенный padding — бейджи стали компактнее */
+  border-radius: 999px;
+  background: rgba(10,10,10,0.85);
+  color: #fff;
+  font-weight: 400;
+  font-size: 12px;         /* меньше шрифт */
+  border: 1px solid rgba(255,255,255,0.03);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.45);
+  min-width: 0;            /* позволяем бейджу быть компактным */
+  white-space: nowrap;
+}
+
+/* левый бейдж — смещён внутрь рамки слева */
+.must-left {
+  left: 8px;
+}
+
+/* правый бейдж — справа, содержит звёзды + текст голосов */
+.must-right {
+  right: 8px;
+  display: inline-flex;         /* inline-flex чтобы встраивался корректно */
+  align-items: center;
+  gap: 12px;                    /* расстояние между блоком звёзд и текстом голосов */
+  z-index: 12;
+  white-space: nowrap;
+}
+
+/* рейтинг (звёзды) */
+.rating-row { display: inline-flex; gap: 8px; align-items: center; margin-right: 3px; }
+.star-icon { width: 12px; height: 12px; object-fit: contain; display: inline-block; }
+
+/* голосов справа от звёзд */
+.votes-text { font-size: 11px; font-weight: 400; color: #fff; }
+
+
+/* post wrapper */
+.must-poster-wrap {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0a0a0a;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+  width: 100%;
+  height: 100%;
+}
+
+/* post image */
+.must-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 8px;
+  transform: translateZ(0);
+  transition: transform .18s ease, filter .18s ease;
+}
+
+.must-poster-wrap:hover .must-poster { transform: scale(1.02); filter: brightness(1.03); }
+
+/* reuse trend-badge but ensure inside must-poster-wrap */
+.must-poster-wrap .trend-badge {
+  bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(10,10,10,0.75);
+  color: #fff;
+  font-weight: 400;
+  font-size: 13px;
+  border: 1px solid rgba(255,255,255,0.03);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.5);
+}
+
+/* left/right positions */
+.must-left { left: 12px; }
+.must-right { right: 12px; display: flex; gap: 8px; align-items: center; }
+
+/* stars images */
+.rating-row { display: inline-flex; gap: 4px; align-items: center; margin-right: 8px; }
+.star-icon { width: 14px; height: 14px; object-fit: contain; display: inline-block; }
+
+.rating-row {
+  display: inline-flex;
+  gap: 6px;                     /* расстояние между звёздами */
+  align-items: center;
+  margin: 0;                    /* убираем лишние внешние отступы */
+  padding: 0;
+  /* небольшая защита от сдвигов на узких экранах */
+  min-width: 0;
+}
+
+/* голосов справа от звёзд */
+.votes-text {
+  font-size: 12px;
+  font-weight: 400;
+  color: #fff;
+}
+
+/* адаптивы: 2 в ряд на средних, 1 в ряд на мобильных */
+@media (max-width: 1200px) {
+  .must-card { width: calc((100% - 2 * 20px) / 3); min-width: 200px; }
+}
+@media (max-width: 900px) {
+  .must-row { gap: 16px; overflow-x: auto; padding-bottom: 12px; -webkit-overflow-scrolling: touch; }
+  .must-card { flex: 0 0 auto; width: 320px; min-width: 260px; }
+}
+@media (max-width: 640px) {
+  .must-card { width: 48%; min-width: 160px; padding: 12px; }
+  .must-poster-wrap { height: 200px; }
+  .trend-badge { padding: 6px 10px; font-size: 12px; }
+}
+
+/* рейтинг (звёзды) — уменьшаем иконки и отступы */
+.must-card .rating-row {
+  display: inline-flex;
+  gap: 4px;                /* чуть плотнее между звёздами */
+  align-items: center;
+  margin-right: 6px;
+}
+
+.must-card .star-icon {
+  width: 12px;             /* меньше иконки */
+  height: 12px;
+  object-fit: contain;
+  display: inline-block;
+}
+
+/* если нужен отдельный маленький номер голосов — уменьшенный */
+.must-card .votes-text {
+  font-size: 11px;
+  font-weight: 400;
+  color: #fff;
+}
+/* ===== keep right badge same size as left, but make stars smaller =====
+   Вставить в КОНЕЦ файла CSS
+*/
+
+/* Правый овал — совпадает по размерам/паддингу/типографике с общим .trend-badge (как левый) */
+.must-card .trend-badge.must-right {
+  /* match .trend-badge defaults */
+  padding: 6px 8px;
+  font-size: 12px;
+  gap: 6px;
+  border-radius: 999px;
+  white-space: nowrap;
+  min-width: 0;
+  max-width: none;
+  overflow: visible;
+  box-sizing: border-box;
+  right: 12px; /* чуть ровнее внутри карточки */
+  display: inline-flex;
+  align-items: center;
+  z-index: 12;
+}
+
+/* Звёздный ряд — чуть плотнее, но не влияет на размер овала */
+.must-card .rating-row {
+  display: inline-flex;
+  gap: 4px;       /* расстояние между звёздами */
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* Только уменьшаем размеры самих иконок звёзд (правый бейдж) */
+.must-card .trend-badge.must-right .star-icon,
+.must-card .trend-badge.must-right img.star-icon {
+  width: 10px !important;
+  height: 10px !important;
+  flex-shrink: 0;
+  display: inline-block;
+  line-height: 0;
+}
+
+/* Убедимся, что число голосов остаётся видимым и читаемым */
+.must-card .trend-badge.must-right .votes-text {
+  display: inline-block !important;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+  margin-left: 0;
+  flex-shrink: 0;
+}
+
