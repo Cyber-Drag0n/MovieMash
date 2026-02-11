@@ -1,0 +1,139 @@
+/* ===== Support page styles ===== */
+.support-page {
+    font-weight: 400;
+    padding: 70px 12px;
+    max-width: 1200px;
+    margin: 0 auto;
+    box-sizing: border-box; }
+
+.support-inner {
+    display: grid;
+    grid-template-columns: 1fr 680px; /* левая зона гибкая, правая фиксированная форма */
+    gap: 28px;
+    align-items: start;
+}
+
+/* LEFT */
+.support-left { color: #fff; }
+.support-title {
+    font-size: 32px;
+    margin: 0 0 12px;
+    color: #fff;
+    line-height: 1.5;
+}
+.support-sub {
+    color: rgba(153, 153, 153, 1);
+    margin: 0 0 18px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* картинка-контейнер */
+.help-visual-wrap {
+    margin-top: 8px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.03);
+    width: 90%;
+    max-width: 500px;
+}
+.help-container-img {
+    width: 100%;
+    height: 70%;
+    display: block;
+    object-fit: cover;
+    background: #0b0b0b;
+}
+
+/* RIGHT — форма */
+.support-right { align-self: start; }
+
+.support-form {
+    background: rgb(12, 12, 12);
+    border-radius: 10px;
+    padding: 35px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.02);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+}
+
+/* две колонки в строчке */
+.row-2 { display: flex; gap: 12px; }
+.row-2 .form-field { flex: 1 1 0; }
+
+/* поля */
+.form-field { display:flex; flex-direction: column; gap:8px; font-weight: 400; }
+.label-text { color: rgba(255, 255, 255, 0.8); font-size:14px; font-weight:400; }
+.form-field input,
+.form-field textarea {
+    background: rgba(0,0,0,0.45);
+    border: 1px solid rgba(255,255,255,0.03);
+    color: #ffffff;
+    padding: 12px 14px;
+    border-radius: 8px;
+    outline: none;
+    font-size: 13px;
+    resize: vertical;
+    font-weight: 400;
+}
+.form-field input::placeholder,
+.form-field textarea::placeholder { color: rgba(153, 153, 153, 1); }
+
+/* телефонный ряд */
+.phone-row { display:flex; gap:8px; align-items: center; }
+.flag-btn {
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.03);
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.flag-img { width:20px; height:14px; object-fit:cover; display:block; }
+.phone-row input { flex: 1 1 0; }
+
+/* нижняя строка */
+.form-bottom {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 12px;
+    margin-top: 4px;
+}
+.accept-row {
+    display:flex;
+    gap:10px;
+    align-items:center;
+    color: rgba(189,189,189,0.85);
+    font-size: 14px;
+    font-weight: 300;
+}
+.accept-row input { width:16px; height:16px; margin-bottom: 4px; }
+
+/* кнопка отправки */
+.submit-btn {
+    background: linear-gradient(180deg,#e81212,#b20808);
+    color: #fff;
+    border: none;
+    padding: 14px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight:400;
+    min-width: 170px;
+    font-size:14px;
+}
+.submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* responsive */
+@media (max-width: 1100px) {
+    .support-inner { grid-template-columns: 1fr; }
+    .help-visual-wrap { max-width: 100%; margin-bottom: 14px; }
+    .support-right { order: 2; }
+}

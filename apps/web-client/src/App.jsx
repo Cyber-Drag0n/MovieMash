@@ -8,6 +8,8 @@ import Plans from "./components/Plans";
 import AdBanner from "./components/AdBanner";
 import Footer from "./components/Footer";
 import MoviesAndSeries from "./pages/MoviesAndSeries";
+import Support from "./pages/Support.jsx";
+import Subscriptions from "./pages/Subscriptions.jsx";
 
 const normalizePath = (p) => {
     if (!p) return "/";
@@ -78,6 +80,11 @@ const App = () => {
 
                 {/* Показываем MoviesAndSeries если путь начинается с /media */}
                 {!isHome && path.startsWith("/media") && <MoviesAndSeries />}
+
+                {!isHome && path.startsWith("/support") && <Support/>}
+
+                {!isHome && path.startsWith("/subscriptions") && <Subscriptions/>}
+
 
                 {/* остальные внутренние пути — оставляем пустыми (по желанию можно добавить заголовок) */}
             </div>

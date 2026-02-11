@@ -1,0 +1,156 @@
+/* ===== Subscriptions page styles ===== */
+.subscriptions-page {
+    padding: 28px 12px;
+    max-width: 1200px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    color: #fff;
+}
+
+.subs-title {
+    font-size: 28px;
+    color: #fff;
+    font-weight: 400;
+    margin: 0 0 8px 20px;
+
+}
+.subs-sub {
+    color: rgba(153,153,153,1);
+    max-width: 1200px;
+    margin: 0 0 8px 20px;
+    font-size: 14px;
+}
+
+/* контейнер таблицы (скроет горизонтальный overflow аккуратно) */
+.table-container {
+    margin-left: 22px;
+    width: 100%;
+    overflow: auto; /* на мобилках позволяем скролл */
+    -webkit-overflow-scrolling: touch;
+
+    border-radius: 12px;
+}
+
+/* сама таблица */
+.subscriptions-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
+    border: 1px solid rgba(255,255,255,0.03);
+    border-radius: 12px;
+    overflow: hidden;
+    table-layout: fixed;
+}
+
+/* шапка */
+.subscriptions-table thead th {
+    background: rgba(0,0,0,0.35);
+    color: #fff;
+    text-align: left;
+    padding: 22px 18px;
+    font-weight: 300;
+    font-size: 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+/* фиксируем ширины: первая колонка уже широкая (функции), остальные равные */
+.subscriptions-table thead th.col-feature { width: 30%; min-width: 220px; }
+.subscriptions-table thead th.col-plan { width: 23%; min-width: 160px; position: relative; }
+
+/* бейдж "Популярное" */
+.plan-badge {
+    display: inline-block;
+    font-size: 12px;
+    background: #e50914;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    margin-left: 10px;
+    font-weight: 300;
+    vertical-align: middle;
+}
+
+/* тело таблицы */
+.subscriptions-table tbody tr td {
+    padding: 18px;
+    color: rgba(189,189,189,0.9);
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.02);
+    vertical-align: top;
+    font-weight: 300;
+    line-height: 1.45;
+}
+
+/* выделяем столбец популярных (опционально) */
+.subscriptions-table thead th.popular,
+.subscriptions-table tbody td.popular {
+    /* можно подсветить чуть ярче рамку или фон, не обязательно */
+}
+
+/* первая колонка — заголовок поля */
+.subscriptions-table tbody td.feature {
+    color: rgba(189,189,189,0.9);
+    font-weight: 700;
+    width: 30%;
+    min-width: 220px;
+}
+
+/* последний ряд-блок не должен иметь border-bottom (если нужно) */
+.subscriptions-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* адаптив: на узких экранах показываем горизонтальный скролл;
+   при сильно узком экране можно изменить отображение в вертикальные блоки */
+@media (max-width: 900px) {
+    .subscriptions-page { padding: 18px 10px; }
+    .subs-title { font-size: 28px; }
+    .subscriptions-table thead th.col-feature { width: 40%; }
+}
+
+/* мобильная версия: превращаем таблицу в карточки (удобно читать на телефоне) */
+@media (max-width: 560px) {
+    .table-container { overflow: visible; }
+    .subscriptions-table,
+    .subscriptions-table thead,
+    .subscriptions-table tbody,
+    .subscriptions-table th,
+    .subscriptions-table td,
+    .subscriptions-table tr {
+        display: block;
+    }
+
+    .subscriptions-table thead { display: none; }
+
+    .subscriptions-table tbody tr {
+        margin-bottom: 14px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.03));
+        border: 1px solid rgba(255,255,255,0.02);
+        border-radius: 10px;
+        padding: 12px;
+    }
+
+    .subscriptions-table tbody tr td {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 12px;
+        border-bottom: none;
+    }
+
+    .subscriptions-table tbody td.feature {
+        color: rgba(189,189,189,0.95);
+        font-weight: 700;
+        width: auto;
+        flex: 1 1 auto;
+    }
+
+    .subscriptions-table tbody td:not(.feature) {
+        flex: 1 1 40%;
+        text-align: right;
+        color: rgba(230,230,230,0.95);
+        font-weight: 500;
+        max-width: 55%;
+    }
+}
