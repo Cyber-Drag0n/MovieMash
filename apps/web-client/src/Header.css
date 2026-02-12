@@ -68,3 +68,145 @@
 }
 .icon-btn:hover { background: rgba(255,255,255,0.04); transform: translateY(-2px); }
 .icon-img { width: 20px; height: 20px; object-fit: contain; }
+
+/* ===== Search overlay that sits ON TOP of header (same left/right/top) ===== */
+.search-overlay {
+    position: fixed;
+    top: 16px;            /* совпадает с .topbar top */
+    left: 32px;
+    right: 32px;
+    z-index: 120;         /* выше, чем header/hero */
+    pointer-events: auto;
+    display: flex;
+    justify-content: center;
+}
+
+/* inner box styled like header (same background/border-radius) */
+.search-inner {
+    width: 100%;
+    max-width: 1260px;
+    background: #0F0F0F;
+    border: 4px solid #1F1F1F;
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+    padding: 12px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* form row */
+.search-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* left search button */
+.search-submit {
+    background: transparent;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 6px;
+}
+.search-submit img { width: 18px; height: 18px; object-fit: contain; }
+
+/* input field: visually matches header style */
+.search-input {
+    flex: 1 1 auto;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.03);
+    color: #fff;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 15px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+/* close button inside overlay (right) */
+.search-popup-close {
+    background: transparent;
+    border: none;
+    color: #fff;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+}
+.search-popup-close:hover { background: rgba(255,255,255,0.03); transform: translateY(-2px); }
+
+/* header search-toggle when open shows cross */
+.icon-btn.search-toggle { width: 40px; height: 40px; }
+.search-close-sign { font-size: 18px; color: #fff; line-height:1; }
+
+/* results area */
+.search-results-wrapper {
+    width: 100%;
+    display: block;
+}
+
+.search-results {
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 320px;
+    overflow: auto;
+}
+
+/* item */
+.search-result {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .12s, transform .08s;
+    border: 1px solid rgba(255,255,255,0.02);
+    background: rgba(255,255,255,0.01);
+}
+.search-result:hover,
+.search-result.active {
+    background: rgba(255,255,255,0.03);
+    transform: translateY(-2px);
+}
+
+/* thumb */
+.result-thumb {
+    width: 56px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex: 0 0 auto;
+}
+
+/* meta */
+.result-meta { display: flex; flex-direction: column; }
+.result-title { color: #fff; font-weight: 700; font-size: 14px; }
+.result-sub { color: rgba(189,189,189,0.85); font-size: 13px; margin-top: 4px; }
+
+/* no results */
+.no-results { color: rgba(189,189,189,0.75); padding: 12px; }
+
+/* mobile adjustments */
+@media (max-width: 760px) {
+    .search-overlay { left: 12px; right: 12px; top: 12px; }
+    .search-inner { padding: 10px; border-radius: 10px; }
+    .result-thumb { width: 48px; height: 64px; }
+    .search-input { font-size: 14px; padding: 10px; }
+}
