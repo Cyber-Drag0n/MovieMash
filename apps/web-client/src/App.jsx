@@ -10,10 +10,10 @@ import Footer from "./components/Footer";
 import MoviesAndSeries from "./pages/MoviesAndSeries";
 import Support from "./pages/Support.jsx";
 import Subscriptions from "./pages/Subscriptions.jsx";
+import AuthPage from "./pages/AuthPage.jsx";
 
 const normalizePath = (p) => {
     if (!p) return "/";
-    // убираем query/hash и завершающие слеши
     const noQuery = p.split("?")[0].split("#")[0];
     return noQuery.replace(/\/+$/, "") || "/";
 };
@@ -25,13 +25,14 @@ const App = () => {
     const navigate = useCallback((to) => {
         const n = normalizePath(to);
         if (window.location.pathname === n) {
-            // если тот же путь — всё равно обновим state (на случай, если мы хотим)
             setPath(n);
             return;
         }
-        window.history.pushState({}, "", to);
+        // пушим нормализованный путь
+        window.history.pushState({}, "", n);
         setPath(n);
-        window.scrollTo({ top: 0, behavior: "instant" });
+        // поведение: auto (валидно)
+        window.scrollTo({ top: 0, behavior: "auto" });
     }, []);
 
     useEffect(() => {
@@ -78,15 +79,15 @@ const App = () => {
                     </>
                 )}
 
-                {/* Показываем MoviesAndSeries если путь начинается с /media */}
                 {!isHome && path.startsWith("/media") && <MoviesAndSeries />}
 
                 {!isHome && path.startsWith("/support") && <Support/>}
 
                 {!isHome && path.startsWith("/subscriptions") && <Subscriptions/>}
 
+                {/* передаём navigate в AuthPage */}
+                {!isHome && path.startsWith("/auth") && <AuthPage navigate={navigate}/>}
 
-                {/* остальные внутренние пути — оставляем пустыми (по желанию можно добавить заголовок) */}
             </div>
 
             <Footer />

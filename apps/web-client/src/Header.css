@@ -210,3 +210,89 @@
     .result-thumb { width: 48px; height: 64px; }
     .search-input { font-size: 14px; padding: 10px; }
 }
+/* ---------- Notifications popup (добавить в конец Header.css) ---------- */
+
+/* Обеспечим точку привязки для всплывающих окон справа (icons-container у тебя уже position: static) */
+.icons-container { position: relative; }
+
+/* popup */
+.notif-popup {
+    position: absolute;
+    top: calc(100% + 10px); /* под иконками */
+    right: 0; /* выравнивание по правому краю icons-container */
+    width: 320px;
+    max-width: calc(100vw - 48px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.6);
+    z-index: 110;
+    padding: 12px;
+    display: none;
+    box-sizing: border-box;
+    color: #fff;
+    border-radius: 12px;
+    background: #0F0F0F;
+    border: 4px solid #1F1F1F;
+    white-space: nowrap;
+}
+
+/* показать */
+.notif-popup.open { display: block; animation: notifFade .12s cubic-bezier(.2,.9,.25,1); }
+
+/* внутренний контейнер */
+.notif-inner { display: flex; flex-direction: column; gap: 10px; }
+
+/* Пустой текст (в центре, как на скрине) */
+.notif-empty {
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #d9d9d9;
+    font-weight: 400;
+    font-size: 14px;
+    text-align: center;
+    padding: 6px 8px;
+}
+
+/* футер с чекбоксом */
+.notif-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.02);
+}
+
+/* label с текстом и checkbox справа */
+.notif-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* текст рядом с чекбоксом */
+.notif-toggle-text {
+    font-size: 13px;
+    color: rgba(255,255,255,0.9);
+    font-weight: 400;
+}
+
+/* нативный checkbox (accent-color поддерживается в современных браузерах) */
+.notif-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #e81212;
+}
+
+/* анимация */
+@keyframes notifFade {
+    from { transform: translateY(-6px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+
+/* адаптив - уменьшить popup на мобильных */
+@media (max-width: 480px) {
+    .notif-popup { right: 6px; width: calc(100vw - 24px); }
+}

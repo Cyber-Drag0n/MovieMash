@@ -1,0 +1,74 @@
+/* src/pages/AuthPage.css */
+.auth-page {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 80px 20px 60px;
+    background: transparent;
+    box-sizing: border-box;
+}
+
+.auth-container {
+    width: 720px;
+    max-width: calc(100% - 40px);
+    background: #0F0F0F;
+    border: 4px solid #1F1F1F;
+    border-radius: 12px;
+    padding: 28px;
+    box-sizing: border-box;
+}
+
+.auth-header { font-size: 32px; color: #fff; text-align: center; margin: 0 0 18px; }
+
+.auth-tabs {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+.tab {
+    background: transparent;
+    border: none;
+    color: #bfbfbf;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.tab.active { background: #1A1A1A; color: #fff; }
+
+.auth-form { display: flex; flex-direction: column; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 8px; color: rgba(189,189,189,0.9); font-size: 13px; }
+.label-text { font-size: 13px; color: rgba(189,189,189,0.9); }
+
+.input {
+    padding: 12px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.03);
+    color: #fff;
+    outline: none;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.password-row { display:flex; gap:8px; align-items:center; }
+.eye-btn { background: transparent; border: none; width: 44px; height: 44px; border-radius: 8px; cursor: pointer; display:flex; align-items:center; justify-content:center; }
+.eye-btn img { width: 18px; height: 18px; object-fit: contain; }
+
+.auth-primary {
+    margin-top: 6px;
+    background: linear-gradient(180deg,#e81212,#b20808);
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.auth-primary:hover { transform: translateY(-2px); }
+
+.auth-alt { text-align:center; margin-top:12px; color: rgba(189,189,189,0.9); }
+.link { border: none; background: transparent; color: #fff; text-decoration: underline; cursor: pointer; }
+
+.auth-error { color: #ff8b8b; font-size: 13px; }
