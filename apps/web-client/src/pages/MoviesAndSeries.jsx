@@ -3,77 +3,41 @@ import React, { useState, useEffect, useRef } from "react";
 import CarouselControls from "../components/CarouselControls";
 import AdBanner from "../components/AdBanner";
 
-/* ----------------- MOVIES data (как было) ----------------- */
-const HERO = [
-    { id: 1, title: "Мстители: Финал", desc: "Оставшиеся в живых члены команды Мстителей...", bg: "/avengers.png" },
-    { id: 2, title: "Джон Уик 4", desc: "Ветеран пытается уйти от преследующих сил...", bg: "/john-wick.png" },
-    { id: 3, title: "Матрица: Воскрешение", desc: "Неожиданные откровения и новый виток борьбы...", bg: "/matrix.png" }
-];
-
-const TRENDES = [
-    { id: 1, img: "/tr1.jpg", duration: "1ч 30мин", views: "2K"},
-    { id: 2, img: "/tr2.jpg", duration: "1ч 57мин", views: "1.5K"},
-    { id: 3, img: "/tr3.jpg", duration: "2ч 10мин", views: "1.8K"},
-    { id: 4, img: "/tr4.jpg", duration: "2ч 20мин", views: "3K"},
-    { id: 5, img: "/tr5.jpg", duration: "1ч 42мин", views: "5K"},
-    { id: 6, img: "/tr6.jpg", duration: "1ч 45мин", views: "3.2K"}
-];
-
-const GENRES = [
-    "Боевик", "Приключение", "Комедия", "Драма", "Хоррор",
-    "Аниме", "Фэнтези", "Триллер"
-];
-
-const NEW_RELEASES = [
-    { id: 1, img: "/example.jpg", release: "Вышел 14 апреля 2023" },
-    { id: 2, img: "/example.jpg", release: "Вышел 22 апреля 2023" },
-    { id: 3, img: "/example.jpg", release: "Вышел 13 апреля 2023" },
-    { id: 4, img: "/example.jpg", release: "Вышел 19 апреля 2023" },
-    { id: 5, img: "/example.jpg", release: "Вышел 11 апреля 2023" },
-    { id: 6, img: "/example.jpg", release: "Вышел 01 марта 2023" }
-];
-
-const MUST_WATCH = [
-    { id: 1, img: "/must1.jpg", duration: "1ч 57мин", rating: 4.5, votes: "20K" },
-    { id: 2, img: "/must2.jpg", duration: "1ч 30мин", rating: 4.0, votes: "12K" },
-    { id: 3, img: "/must3.jpg", duration: "1ч 42мин", rating: 4.8, votes: "48K" },
-    { id: 4, img: "/must4.jpg", duration: "2ч 10мин", rating: 4.2, votes: "9.2K" }
-];
-
-/* ----------------- SERIES data (дублируем / переиспользуем для "как у фильмов") ----------------- */
-/* Чтобы "В трендах" и "Новинки" для сериалов были такими же по количеству блоков,
-   мы переиспользуем массивы TRENDES и NEW_RELEASES. */
-const TRENDES_SERIES = TRENDES.slice(); // копия, можно заменить на свои данные
-// Новинки сериалов — добавил поля duration и seasons (чтобы показывать левый/правый овалы)
-const NEW_RELEASES_SERIES = [
-    { id: 1, img: "/example.jpg", release: "Вышел 05 мая 2023", duration: "10ч 30мин", seasons: "5 сезонов" },
-    { id: 2, img: "/example.jpg", release: "Вышел 20 апреля 2023", duration: "8ч 20мин", seasons: "3 сезона" },
-    { id: 3, img: "/example.jpg", release: "Вышел 01 апреля 2023", duration: "12ч 10мин", seasons: "6 сезонов" },
-    { id: 4, img: "/example.jpg", release: "Вышел 10 марта 2023", duration: "9ч 00мин", seasons: "4 сезона" },
-    { id: 5, img: "/example.jpg", release: "Вышел 28 февраля 2023", duration: "7ч 40мин", seasons: "2 сезона" },
-    { id: 6, img: "/example.jpg", release: "Вышел 15 февраля 2023", duration: "11ч 05мин", seasons: "7 сезонов" }
-];
-
-const GENRES_SERIES = GENRES.slice();
-
-const MUST_WATCH_SERIES = [
-    { id: 1, img: "/must1.jpg", duration: "10ч 30мин", rating: 4.9, votes: "300K" },
-    { id: 2, img: "/must2.jpg", duration: "12ч 10мин", rating: 4.6, votes: "210K" },
-    { id: 3, img: "/must3.jpg", duration: "9ч 45мин", rating: 4.7, votes: "180K" },
-    { id: 4, img: "/must4.jpg", duration: "15ч 00мин", rating: 4.4, votes: "90K" }
-];
+const API_BASE_URL = 'https://api.themoviedb.org/3';
+const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+const API_OPTIONS = {
+    method: "GET",
+    headers: {
+        accept: "application/json",
+        Authorization: `Bearer ${API_KEY}`,
+    }
+};
+const IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 
 /* ----------------- Компонент страницы ----------------- */
 export default function MoviesAndSeries() {
     const [heroIndex, setHeroIndex] = useState(0);
     const autoplayRef = useRef(null);
 
-    // Movies states
+    // Movies states (заменяют заглушки)
+    const [genresMovies, setGenresMovies] = useState([]);            // [{id, name}, ...]
+    const [moviesByGenre, setMoviesByGenre] = useState({});          // { genreId: [movies...] }
+    const [trendingMovies, setTrendingMovies] = useState([]);
+    const [newMovies, setNewMovies] = useState([]);
+    const [mustWatchMovies, setMustWatchMovies] = useState([]);
+    const [heroItems, setHeroItems] = useState([]);
+
+    // Series states (аналогично)
+    const [genresSeries, setGenresSeries] = useState([]);
+    const [moviesByGenreSeries, setMoviesByGenreSeries] = useState({});
+    const [trendingSeries, setTrendingSeries] = useState([]);
+    const [newSeries, setNewSeries] = useState([]);
+    const [mustWatchSeries, setMustWatchSeries] = useState([]);
+
+    // Пагинация / карусели
     const [genresPage, setGenresPage] = useState(0);
     const [topGenrePage, setTopGenrePage] = useState(0);
     const [trendsPage, setTrendsPage] = useState(0);
-
-    // Series states (отдельные)
     const [genresPageSeries, setGenresPageSeries] = useState(0);
     const [topGenrePageSeries, setTopGenrePageSeries] = useState(0);
     const [trendsPageSeries, setTrendsPageSeries] = useState(0);
@@ -82,74 +46,126 @@ export default function MoviesAndSeries() {
     const TOP_GENRES_PER_PAGE = 4;
     const TRENDS_PER_PAGE = 5;
 
-    const genresPagesCount = Math.max(1, Math.ceil(GENRES.length / GENRES_PER_PAGE));
-    const topGenresPagesCount = Math.max(1, Math.ceil(GENRES.length / TOP_GENRES_PER_PAGE));
-    const trendsPagesCount = Math.max(1, Math.ceil(TRENDES.length / TRENDS_PER_PAGE));
+    // Состояния загрузки/ошибки для первичной инициализации
+    const [isLoadingInitial, setIsLoadingInitial] = useState(false);
+    const [loadError, setLoadError] = useState(''); // пустая строка — нет ошибки
 
-    const genresPagesCountSeries = Math.max(1, Math.ceil(GENRES_SERIES.length / GENRES_PER_PAGE));
-    const topGenresPagesCountSeries = Math.max(1, Math.ceil(GENRES_SERIES.length / TOP_GENRES_PER_PAGE));
-    const trendsPagesCountSeries = Math.max(1, Math.ceil(TRENDES_SERIES.length / TRENDS_PER_PAGE));
-
-    const [newPage, setNewPage] = useState(0);
-    const NEW_PER_PAGE = 5;
-    const newPagesCount = Math.max(1, Math.ceil(NEW_RELEASES.length / NEW_PER_PAGE));
-    const newPrev = () => setNewPage(p => Math.max(0, p - 1));
-    const newNext = () => setNewPage(p => Math.min(newPagesCount - 1, p + 1));
-
-    const [newPageSeries, setNewPageSeries] = useState(0);
-    const newPagesCountSeries = Math.max(1, Math.ceil(NEW_RELEASES_SERIES.length / NEW_PER_PAGE));
-    const newPrevSeries = () => setNewPageSeries(p => Math.max(0, p - 1));
-    const newNextSeries = () => setNewPageSeries(p => Math.min(newPagesCountSeries - 1, p + 1));
-
-    useEffect(() => {
-        autoplayRef.current = setInterval(() => setHeroIndex(i => (i + 1) % HERO.length), 8000);
-        return () => clearInterval(autoplayRef.current);
-    }, []);
-
-    const onHeroEnter = () => clearInterval(autoplayRef.current);
-    const onHeroLeave = () => {
-        clearInterval(autoplayRef.current);
-        autoplayRef.current = setInterval(() => setHeroIndex(i => (i + 1) % HERO.length), 8000);
+    // fetch-обёртка для TMDB (использует Authorization header; при v3 api_key — адаптируй)
+    const fetchTMDB = async (path) => {
+        const url = `${API_BASE_URL}${path}${path.includes('?') ? '&' : '?'}language=ru-RU`;
+        const res = await fetch(url, API_OPTIONS);
+        if (!res.ok) throw new Error(`TMDB ${res.status}`);
+        return res.json();
     };
 
-    const heroPrev = () => setHeroIndex(i => (i - 1 + HERO.length) % HERO.length);
-    const heroNext = () => setHeroIndex(i => (i + 1) % HERO.length);
-    const heroGoTo = (i) => setHeroIndex(i);
+    // Вынес загрузчик в useCallback, чтобы можно было перезапустить по кнопке "Повторить"
+    const loadInitial = useCallback(async () => {
+        setIsLoadingInitial(true);
+        setLoadError('');
+        try {
+            // Основные параллельные запросы (фильмы + сериалы)
+            const [
+                genresMovieResp,
+                trendingMovieResp,
+                nowPlayingResp,
+                popularResp,
+                genresTvResp,
+                trendingTvResp,
+                onAirTvResp,
+                popularTvResp
+            ] = await Promise.all([
+                fetchTMDB('/genre/movie/list'),
+                fetchTMDB('/trending/movie/week'),
+                fetchTMDB('/movie/now_playing?page=1'),
+                fetchTMDB('/movie/popular?page=1'),
+                fetchTMDB('/genre/tv/list'),
+                fetchTMDB('/trending/tv/week'),
+                fetchTMDB('/tv/on_the_air?page=1'),
+                fetchTMDB('/tv/popular?page=1')
+            ]);
 
-    // Movies controls
-    const genresPrev = () => setGenresPage(p => Math.max(0, p - 1));
-    const genresNext = () => setGenresPage(p => Math.min(genresPagesCount - 1, p + 1));
-    const topPrev = () => setTopGenrePage(p => Math.max(0, p - 1));
-    const topNext = () => setTopGenrePage(p => Math.min(topGenresPagesCount - 1, p + 1));
-    const trendsPrev = () => setTrendsPage(p => Math.max(0, p - 1));
-    const trendsNext = () => setTrendsPage(p => Math.min(trendsPagesCount - 1, p + 1));
+            // Заполняем базовые состояния
+            setGenresMovies(genresMovieResp.genres || []);
+            setTrendingMovies(trendingMovieResp.results || []);
+            setNewMovies(nowPlayingResp.results || []);
+            setMustWatchMovies((popularResp.results || []).slice(0, 6));
+            setHeroItems((popularResp.results || []).slice(0, 6));
 
-    // Series controls
-    const genresPrevSeries = () => setGenresPageSeries(p => Math.max(0, p - 1));
-    const genresNextSeries = () => setGenresPageSeries(p => Math.min(genresPagesCountSeries - 1, p + 1));
-    const topPrevSeries = () => setTopGenrePageSeries(p => Math.max(0, p - 1));
-    const topNextSeries = () => setTopGenrePageSeries(p => Math.min(topGenresPagesCountSeries - 1, p + 1));
-    const trendsPrevSeries = () => setTrendsPageSeries(p => Math.max(0, p - 1));
-    const trendsNextSeries = () => setTrendsPageSeries(p => Math.min(trendsPagesCountSeries - 1, p + 1));
+            setGenresSeries(genresTvResp.genres || []);
+            setTrendingSeries(trendingTvResp.results || []);
+            setNewSeries(onAirTvResp.results || []);
+            setMustWatchSeries((popularTvResp.results || []).slice(0, 6));
 
-    /* ---------- RENDER HELPERS (movies) ---------- */
+            // --------- ВАЖНО: ограничиваем жанры до 8 (чтобы не делать слишком много запросов) ---------
+            const movieGenreList = (genresMovieResp.genres || []).slice(0, 8);
+            const tvGenreList = (genresTvResp.genres || []).slice(0, 8);
+
+            // Запрашиваем discover для каждого выбранного жанра (по топ-популярности)
+            const movieByGenrePromises = movieGenreList.map(async (g) => {
+                const resp = await fetchTMDB(`/discover/movie?with_genres=${g.id}&sort_by=popularity.desc&page=1`);
+                return { genreId: g.id, items: resp.results || [] };
+            });
+
+            const seriesByGenrePromises = tvGenreList.map(async (g) => {
+                const resp = await fetchTMDB(`/discover/tv?with_genres=${g.id}&sort_by=popularity.desc&page=1`);
+                return { genreId: g.id, items: resp.results || [] };
+            });
+
+            const moviesByGenreArr = await Promise.all(movieByGenrePromises);
+            const seriesByGenreArr = await Promise.all(seriesByGenrePromises);
+
+            const moviesByGenreObj = {};
+            moviesByGenreArr.forEach(x => { moviesByGenreObj[x.genreId] = x.items; });
+            setMoviesByGenre(moviesByGenreObj);
+
+            const seriesByGenreObj = {};
+            seriesByGenreArr.forEach(x => { seriesByGenreObj[x.genreId] = x.items; });
+            setMoviesByGenreSeries(seriesByGenreObj);
+
+        } catch (err) {
+            console.error("Ошибка загрузки данных TMDB:", err);
+            setLoadError('Не удалось загрузить данные. Проверьте подключение и нажмите «Повторить».');
+        } finally {
+            setIsLoadingInitial(false);
+        }
+    }, []);
+
+    // монтирование — запускаем загрузку
+    useEffect(() => {
+        loadInitial();
+        // autoplay для hero
+        autoplayRef.current = setInterval(() => setHeroIndex(i => (i + 1) % Math.max(1, heroItems.length || 3)), 8000);
+        return () => clearInterval(autoplayRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Вспомогательные функции форматирования
+    const getPoster = (item) => item?.poster_path ? `${IMAGE_BASE}${item.poster_path}` : "/example.jpg";
+    const getBackdrop = (item) => item?.backdrop_path ? `${IMAGE_BASE}${item.backdrop_path}` : (item?.poster_path ? `${IMAGE_BASE}${item.poster_path}` : "/example.jpg");
+    const formatVotes = (v) => v ? `${Math.round(v / 1000)}K` : "—";
+
+    /* ------------------ РЕНДЕР-ХЕЛПЕРЫ ------------------ */
+
+    // Жанры (фильмы) — берем страницы по GENRES_PER_PAGE
     const renderGenresPage = (page) => {
-        const groups = [];
-        for (let i = 0; i < GENRES.length; i += GENRES_PER_PAGE) groups.push(GENRES.slice(i, i + GENRES_PER_PAGE));
-        const slice = groups[page] || [];
+        const start = page * GENRES_PER_PAGE;
+        const slice = genresMovies.slice(start, start + GENRES_PER_PAGE);
         return (
             <div style={{ display: "flex", gap: 20 }}>
                 {slice.map((g) => (
-                    <article className="category-card" key={g}>
+                    <article className="category-card" key={g.id}>
                         <div className="poster-grid">
-                            <div className="poster poster-1" />
-                            <div className="poster poster-2" />
-                            <div className="poster poster-3" />
-                            <div className="poster poster-4" />
+                            {(moviesByGenre[g.id] || []).slice(0,4).map((m, idx) => (
+                                <div
+                                    key={idx}
+                                    className={`poster poster-${idx+1}`}
+                                    style={{ backgroundImage: `url(${getPoster(m)})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                                />
+                            ))}
                         </div>
                         <div className="card-footer">
-                            <span className="cat-title">{g}</span>
-                            <button className="cat-go" aria-label={`Перейти в ${g}`}>➜</button>
+                            <span className="cat-title">{g.name}</span>
+                            <button className="cat-go" aria-label={`Перейти в ${g.name}`}>➜</button>
                         </div>
                     </article>
                 ))}
@@ -157,84 +173,53 @@ export default function MoviesAndSeries() {
         );
     };
 
+    // Top-10 по жанрам (movies) — 2x2 превью внутри карточки
     const renderTopGenresPage = (page) => {
         const groups = [];
-        for (let i = 0; i < GENRES.length; i += TOP_GENRES_PER_PAGE) groups.push(GENRES.slice(i, i + TOP_GENRES_PER_PAGE));
+        for (let i = 0; i < genresMovies.length; i += TOP_GENRES_PER_PAGE) groups.push(genresMovies.slice(i, i + TOP_GENRES_PER_PAGE));
         const slice = groups[page] || [];
         return (
             <div style={{ display: "flex", gap: 22, justifyContent: "center", alignItems: "flex-start" }}>
-                {slice.map((g) => (
-                    <article className="category-card top-card" key={g}>
-                        <div className="poster-wrap">
-                            <div className="top-badge">Топ-10 в</div>
-                            <div className="poster-grid">
-                                <div className="poster poster-1" />
-                                <div className="poster poster-2" />
-                                <div className="poster poster-3" />
-                                <div className="poster poster-4" />
+                {slice.map((g) => {
+                    const items = moviesByGenre[g.id] || [];
+                    return (
+                        <article className="category-card top-card" key={g.id}>
+                            <div className="poster-wrap">
+                                <div className="top-badge">Топ-10 в</div>
+                                <div className="poster-grid">
+                                    {items.slice(0,4).map((m, i) => (
+                                        <div key={i} className="poster" style={{ height: 78, borderRadius: 8, backgroundImage: `url(${getPoster(m)})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                        <div className="card-footer">
-                            <span className="cat-title">{g}</span>
-                            <button className="cat-go" aria-label={`Перейти в ${g}`}>➜</button>
-                        </div>
-                    </article>
-                ))}
+                            <div className="card-footer">
+                                <span className="cat-title">{g.name}</span>
+                                <button className="cat-go" aria-label={`Перейти в ${g.name}`}>➜</button>
+                            </div>
+                        </article>
+                    );
+                })}
             </div>
         );
     };
 
-    function NewReleaseCard({ item }) {
-        return (
-            <article className="category-card new-card" role="listitem">
-                <div className="new-poster-wrap" aria-hidden="true">
-                    <img
-                        src={item.img}
-                        alt=""
-                        className="new-poster"
-                        onError={(e) => { e.currentTarget.src = "/example.jpg"; }}
-                    />
-                </div>
-
-                <span className="new-badge">
-          <span className="new-badge-text">{item.release}</span>
-        </span>
-            </article>
-        );
-    }
-
-    const renderNewReleasesPage = (page) => {
-        const start = page * NEW_PER_PAGE;
-        const slice = NEW_RELEASES.slice(start, start + NEW_PER_PAGE);
-        return (
-            <div className="trends-row" role="list" style={{ justifyContent: "flex-start" }}>
-                {slice.map(it => <NewReleaseCard key={it.id} item={it} />)}
-            </div>
-        );
-    };
-
+    // В трендах (movies)
     const renderTrendsPage = (page) => {
         const start = page * TRENDS_PER_PAGE;
-        const slice = TRENDES.slice(start, start + TRENDS_PER_PAGE);
+        const slice = trendingMovies.slice(start, start + TRENDS_PER_PAGE);
         return (
             <div className="trends-row" role="list" style={{ justifyContent: "flex-start" }}>
                 {slice.map(t => (
-                    <article className="trend-card" key={t.id} role="listitem" aria-hidden="false">
-                        <div className="trend-poster-wrap" aria-hidden="true">
-                            <img
-                                src={t.img}
-                                className="trend-poster"
-                                onError={(e) => { e.currentTarget.src = "/example.jpg"; }}
-                            />
-
+                    <article className="trend-card" key={t.id}>
+                        <div className="trend-poster-wrap">
+                            <img src={getPoster(t)} className="trend-poster" alt={t.title || t.name} onError={(e)=>{e.currentTarget.src="/example.jpg"}} />
                             <span className="trend-badge left">
                 <img src="/Time.svg" alt="" />
-                <span className="badge-text">{t.duration}</span>
+                <span className="badge-text">—</span> {/* runtime — нужен detail запрос */}
               </span>
-
                             <span className="trend-badge right">
                 <img src="/Eye.svg" alt="" />
-                <span className="badge-text">{t.views}</span>
+                <span className="badge-text">{formatVotes(t.vote_count)}</span>
               </span>
                         </div>
                     </article>
@@ -243,134 +228,20 @@ export default function MoviesAndSeries() {
         );
     };
 
-    function MustWatchCard({ item }) {
-        const fullStars = Math.floor(item.rating);
-        const halfStar = item.rating - fullStars >= 0.5;
-        const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-
-        return (
-            <article className="category-card top-card must-card" role="listitem">
-                <div className="must-poster-wrap">
-                    <img
-                        src={item.img}
-                        alt=""
-                        className="must-poster"
-                        onError={(e) => { e.currentTarget.src = "/example.jpg"; }}
-                    />
-                </div>
-
-                <span className="trend-badge left must-left" aria-hidden="true">
-          <img src="/Time.svg" alt="" />
-          <span className="badge-text">{item.duration}</span>
-        </span>
-
-                <span className="trend-badge right must-right" aria-hidden="true">
-          <span className="rating-row" aria-label={`Рейтинг ${item.rating} из 5`}>
-            {Array.from({ length: fullStars }).map((_, i) => (
-                <img key={"f"+i} src="/star-filled.svg" alt="" className="star-icon" />
-            ))}
-              {halfStar && <img key="half" src="/star-half.svg" alt="" className="star-icon" />}
-              {Array.from({ length: emptyStars }).map((_, i) => (
-                  <img key={"e"+i} src="/star-empty.svg" alt="" className="star-icon" />
-              ))}
-          </span>
-
-          <span className="badge-text votes-text">{item.votes}</span>
-        </span>
-            </article>
-        );
-    }
-
-    const renderMustWatch = () => {
-        return (
-            <div className="section-block" style={{ maxWidth: 1200, margin: "20px auto 60px", padding: "0 12px", position: "relative" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <h3 className="categories-title">Фильмы, которые обязательно нужно посмотреть</h3>
-                    <CarouselControls page={0} pages={1} onPrev={()=>{}} onNext={()=>{}} />
-                </div>
-
-                <div style={{ padding: "12px 0 0" }}>
-                    <div className="must-row" role="list" style={{ display: "flex", gap: 22, justifyContent: "flex-start" }}>
-                        {MUST_WATCH.map(m => <MustWatchCard key={m.id} item={m} />)}
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
-    /* ---------- RENDER HELPERS (series)  ---------- */
-    const renderGenresPageSeries = (page) => {
-        const groups = [];
-        for (let i = 0; i < GENRES_SERIES.length; i += GENRES_PER_PAGE) groups.push(GENRES_SERIES.slice(i, i + GENRES_PER_PAGE));
-        const slice = groups[page] || [];
-        return (
-            <div style={{ display: "flex", gap: 20 }}>
-                {slice.map((g) => (
-                    <article className="category-card" key={g + "-s"}>
-                        <div className="poster-grid">
-                            <div className="poster poster-1" />
-                            <div className="poster poster-2" />
-                            <div className="poster poster-3" />
-                            <div className="poster poster-4" />
-                        </div>
-                        <div className="card-footer">
-                            <span className="cat-title">{g}</span>
-                            <button className="cat-go" aria-label={`Перейти в ${g}`}>➜</button>
-                        </div>
-                    </article>
-                ))}
-            </div>
-        );
-    };
-
-    const renderTopGenresPageSeries = (page) => {
-        const groups = [];
-        for (let i = 0; i < GENRES_SERIES.length; i += TOP_GENRES_PER_PAGE) groups.push(GENRES_SERIES.slice(i, i + TOP_GENRES_PER_PAGE));
-        const slice = groups[page] || [];
-        return (
-            <div style={{ display: "flex", gap: 22, justifyContent: "center", alignItems: "flex-start" }}>
-                {slice.map((g) => (
-                    <article className="category-card top-card" key={g + "-s"}>
-                        <div className="poster-wrap">
-                            <div className="top-badge">Топ-10 в</div>
-                            <div className="poster-grid">
-                                <div className="poster poster-1" />
-                                <div className="poster poster-2" />
-                                <div className="poster poster-3" />
-                                <div className="poster poster-4" />
-                            </div>
-                        </div>
-                        <div className="card-footer">
-                            <span className="cat-title">{g}</span>
-                            <button className="cat-go" aria-label={`Перейти в ${g}`}>➜</button>
-                        </div>
-                    </article>
-                ))}
-            </div>
-        );
-    };
-
-    // Новинки сериалов — левый овал: duration, правый овал: seasons (Seasons.svg)
-    const renderNewReleasesPageSeries = (page) => {
+    // Новинки фильмов
+    const renderNewReleasesPage = (page) => {
+        const NEW_PER_PAGE = 5;
         const start = page * NEW_PER_PAGE;
-        const slice = NEW_RELEASES_SERIES.slice(start, start + NEW_PER_PAGE);
+        const slice = newMovies.slice(start, start + NEW_PER_PAGE);
         return (
             <div className="trends-row" role="list" style={{ justifyContent: "flex-start" }}>
                 {slice.map(it => (
-                    <article className="category-card new-card" key={"s"+it.id}>
-                        <div className="new-poster-wrap" aria-hidden="true">
-                            <img src={it.img} alt="" className="new-poster" onError={(e)=>{e.currentTarget.src="/example.jpg"}} />
+                    <article className="category-card new-card" key={it.id}>
+                        <div className="new-poster-wrap">
+                            <img src={getPoster(it)} alt={it.title} className="new-poster" onError={(e)=>{e.currentTarget.src="/example.jpg"}} />
                         </div>
-
-                        {/* бейджи вынесены наружу (внешняя рамка): левый — duration, правый — seasons */}
-                        <span className="trend-badge left" style={{ position: "absolute", bottom: 12, left: 12 }}>
-              <img src="/Time.svg" alt="" />
-              <span className="badge-text">{it.duration}</span>
-            </span>
-
-                        <span className="trend-badge right" style={{ position: "absolute", bottom: 12, right: 12 }}>
-              <img src="/Seasons.svg" alt="" />
-              <span className="badge-text">{it.seasons}</span>
+                        <span className="new-badge">
+              <span className="new-badge-text">{it.release_date ? `Вышел ${it.release_date}` : "—"}</span>
             </span>
                     </article>
                 ))}
@@ -378,252 +249,173 @@ export default function MoviesAndSeries() {
         );
     };
 
-    const renderTrendsPageSeries = (page) => {
-        const start = page * TRENDS_PER_PAGE;
-        const slice = TRENDES_SERIES.slice(start, start + TRENDS_PER_PAGE);
-        return (
-            <div className="trends-row" role="list" style={{ justifyContent: "flex-start" }}>
-                {slice.map((t, idx) => (
-                    <article className="trend-card" key={"s"+t.id+"-"+idx} role="listitem" aria-hidden="false">
-                        <div className="trend-poster-wrap" aria-hidden="true">
-                            <img
-                                src={t.img}
-                                className="trend-poster"
-                                onError={(e) => { e.currentTarget.src = "/example.jpg"; }}
-                            />
-
-                            <span className="trend-badge left">
-                <img src="/Time.svg" alt="" />
-                <span className="badge-text">{t.duration}</span>
-              </span>
-
-                            <span className="trend-badge right">
-                <img src="/Eye.svg" alt="" />
-                <span className="badge-text">{t.views}</span>
-              </span>
-                        </div>
-                    </article>
-                ))}
+    // Must-watch (фильмы)
+    const renderMustWatch = () => (
+        <div className="section-block" style={{ maxWidth: 1200, margin: "20px auto 60px", padding: "0 12px", position: "relative" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <h3 className="categories-title">Фильмы, которые обязательно нужно посмотреть</h3>
             </div>
-        );
-    };
 
-    function MustWatchCardSeries({ item }) {
-        // оставляем как у фильмов: слева время, справа — рейтинг/звёзды + голоса
-        const fullStars = Math.floor(item.rating);
-        const halfStar = item.rating - fullStars >= 0.5;
-        const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-        return (
-            <article className="category-card top-card must-card" role="listitem" key={"s"+item.id}>
-                <div className="must-poster-wrap">
-                    <img src={item.img} alt="" className="must-poster" onError={(e)=>{e.currentTarget.src="/example.jpg"}} />
-                </div>
+            <div style={{ padding: "12px 0 0" }}>
+                <div className="must-row" role="list" style={{ display: "flex", gap: 22, justifyContent: "flex-start" }}>
+                    {mustWatchMovies.map(item => {
+                        const rating = item.vote_average || 0;
+                        const stars = Math.round((rating/10) * 5);
+                        return (
+                            <article className="category-card top-card must-card" key={item.id}>
+                                <div className="must-poster-wrap">
+                                    <img src={getPoster(item)} alt={item.title} className="must-poster" onError={(e)=>{e.currentTarget.src="/example.jpg"}} />
+                                </div>
 
-                <span className="trend-badge left must-left" aria-hidden="true">
-          <img src="/Time.svg" alt="" />
-          <span className="badge-text">{item.duration}</span>
-        </span>
+                                <span className="trend-badge left must-left">
+                  <img src="/Time.svg" alt="" />
+                  <span className="badge-text">—</span>
+                </span>
 
-                <span className="trend-badge right must-right" aria-hidden="true">
-          <span className="rating-row" aria-label={`Рейтинг ${item.rating} из 5`}>
-            {Array.from({ length: fullStars }).map((_, i) => (<img key={"sf"+i} src="/star-filled.svg" alt="" className="star-icon" />))}
-              {halfStar && <img key="sh" src="/star-half.svg" alt="" className="star-icon" />}
-              {Array.from({ length: emptyStars }).map((_, i) => (<img key={"se"+i} src="/star-empty.svg" alt="" className="star-icon" />))}
-          </span>
-          <span className="badge-text votes-text">{item.votes}</span>
-        </span>
-            </article>
-        );
-    }
-
-    const renderMustWatchSeries = () => {
-        return (
-            <div className="section-block" style={{ maxWidth: 1200, margin: "20px auto 60px", padding: "0 12px", position: "relative" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <h3 className="categories-title">Сериалы, которые обязательно нужно посмотреть</h3>
-                    <CarouselControls page={0} pages={1} onPrev={()=>{}} onNext={()=>{}} />
-                </div>
-
-                <div style={{ padding: "12px 0 0" }}>
-                    <div className="must-row" role="list" style={{ display: "flex", gap: 22, justifyContent: "flex-start" }}>
-                        {MUST_WATCH_SERIES.map(m => <MustWatchCardSeries key={"s"+m.id} item={m} />)}
-                    </div>
+                                <span className="trend-badge right must-right">
+                  <span className="rating-row" aria-label={`Рейтинг ${rating} из 10`}>
+                    {Array.from({length: stars}).map((_,i) => <img key={i} src="/star-filled.svg" className="star-icon" alt=""/> )}
+                      {Array.from({length: 5-stars}).map((_,i) => <img key={"e"+i} src="/star-empty.svg" className="star-icon" alt=""/> )}
+                  </span>
+                  <span className="badge-text votes-text">{formatVotes(item.vote_count)}</span>
+                </span>
+                            </article>
+                        );
+                    })}
                 </div>
             </div>
-        );
-    };
+        </div>
+    );
 
-    /* ----------------- JSX page ----------------- */
+    /* ------------------ JSX страницы ------------------ */
     return (
         <section className="ms-page" aria-label="Фильмы и сериалы">
-            {/* HERO (movies) — единственный крупный баннер, который остался */}
-            <div className="ms-hero" onMouseEnter={onHeroEnter} onMouseLeave={onHeroLeave}>
-                {HERO[heroIndex]?.bg && <img className="ms-bg-img" src={HERO[heroIndex].bg} alt={HERO[heroIndex].title} />}
+            {/* Если была ошибка загрузки — показываем верхний баннер с кнопками */}
+            {loadError && (
+                <div style={{
+                    maxWidth: 1200, margin: '18px auto', padding: '12px 16px',
+                    borderRadius: 10, background: 'linear-gradient(180deg, rgba(232,18,18,0.08), rgba(20,20,20,0.6))',
+                    border: '1px solid rgba(232,18,18,0.12)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12
+                }}>
+                    <div style={{ fontSize: 14 }}>{loadError}</div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        <button onClick={() => loadInitial()} style={{ background: '#E81212', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: 8, cursor: 'pointer' }}>Повторить</button>
+                        <button onClick={() => setLoadError('')} style={{ background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.06)', padding: '8px 12px', borderRadius: 8, cursor: 'pointer' }}>Закрыть</button>
+                    </div>
+                </div>
+            )}
+
+            {/* Loading state: можно показать skeleton или простой текст */}
+            {isLoadingInitial && (
+                <div style={{ maxWidth: 1200, margin: '8px auto', color: '#BDBDBD', padding: '8px 12px' }}>Загрузка данных...</div>
+            )}
+
+            {/* HERO (используем heroItems) */}
+            <div className="ms-hero" onMouseEnter={() => clearInterval(autoplayRef.current)} onMouseLeave={() => {
+                clearInterval(autoplayRef.current);
+                autoplayRef.current = setInterval(() => setHeroIndex(i => (i + 1) % Math.max(1, heroItems.length || 3)), 8000);
+            }}>
+                {heroItems[heroIndex] && (
+                    <img className="ms-bg-img" src={getBackdrop(heroItems[heroIndex])} alt={heroItems[heroIndex].title || heroItems[heroIndex].name} />
+                )}
                 <div className="ms-hero-overlay" />
-
-                <button className="ms-hero-arrow left" onClick={heroPrev} aria-label="Предыдущий">
-                    <img src="/Arrow_left.svg" alt="Назад" />
-                </button>
-                <button className="ms-hero-arrow right" onClick={heroNext} aria-label="Следующий">
-                    <img src="/Arrow_right.svg" alt="Вперед" />
-                </button>
-
                 <div className="ms-hero-center">
-                    <h1 className="ms-hero-title">{HERO[heroIndex].title}</h1>
-                    <p className="ms-hero-desc">{HERO[heroIndex].desc}</p>
+                    <h1 className="ms-hero-title">{heroItems[heroIndex]?.title || heroItems[heroIndex]?.name || "Премьеры"}</h1>
+                    <p className="ms-hero-desc">{heroItems[heroIndex]?.overview}</p>
 
                     <div className="ms-hero-actions" role="group" aria-label="Действия с фильмом">
-                        <button className="ms-btn ms-btn-play" aria-label={`Смотреть ${HERO[heroIndex].title}`}>
+                        <button className="ms-btn ms-btn-play" aria-label="Смотреть">
                             <img src="/Play.svg" alt="" className="ms-btn-icon" />
                             <span>Смотреть</span>
-                        </button>
-                        <button className="ms-btn ms-btn-circle" aria-label="Добавить в список">
-                            <img src="/plus.svg" alt="" className="ms-btn-small-icon" />
-                        </button>
-                        <button className="ms-btn ms-btn-circle" aria-label="Нравится">
-                            <img src="/like.svg" alt="" className="ms-btn-small-icon" />
-                        </button>
-                        <button className="ms-btn ms-btn-circle" aria-label="Звук">
-                            <img src="/sound.svg" alt="" className="ms-btn-small-icon" />
                         </button>
                     </div>
                 </div>
 
                 <div className="ms-hero-indicators" role="tablist" aria-label="Постеры">
-                    {HERO.map((_, i) => (
-                        <button
-                            key={i}
-                            className={`ms-ind-dot ${i === heroIndex ? "active" : ""}`}
-                            onClick={() => heroGoTo(i)}
-                            aria-pressed={i === heroIndex}
-                            aria-label={`Перейти к ${i + 1}`}
-                        />
+                    {heroItems.map((_, i) => (
+                        <button key={i} className={`ms-ind-dot ${i === heroIndex ? "active" : ""}`} onClick={() => setHeroIndex(i)} aria-pressed={i === heroIndex} aria-label={`Перейти к ${i+1}`} />
                     ))}
                 </div>
             </div>
 
-            {/* ---------------- MOVIES: Наши жанры ---------------- */}
+            {/* --- Наши жанры (movies) --- */}
             <div className="section-block" style={{ maxWidth: 1200, margin: "28px auto 0", padding: "0 12px", position: "relative" }}>
-                <button className="ms-btn ms-btn-watch" aria-current="true">
-                    <span>Фильмы</span>
-                </button>
-
+                <button className="ms-btn ms-btn-watch"><span>Фильмы</span></button>
                 <div className="categories-head" style={{ alignItems: "center" }}>
-                    <div className="categories-left">
-                        <h3 className="categories-title">Наши жанры</h3>
-                    </div>
-
-                    <CarouselControls page={genresPage} pages={genresPagesCount} onPrev={genresPrev} onNext={genresNext} />
+                    <div className="categories-left"><h3 className="categories-title">Наши жанры</h3></div>
+                    <CarouselControls page={genresPage} pages={Math.max(1, Math.ceil(genresMovies.length/GENRES_PER_PAGE))} onPrev={() => setGenresPage(p => Math.max(0, p-1))} onNext={() => setGenresPage(p => Math.min(Math.max(0, Math.ceil(genresMovies.length/GENRES_PER_PAGE)-1), p+1))} />
                 </div>
-
                 <div style={{ padding: "12px 0 28px" }}>
                     {renderGenresPage(genresPage)}
                 </div>
             </div>
 
-            {/* ---------------- MOVIES: Популярный Топ-10 по жанрам ---------------- */}
+            {/* --- Популярный Топ-10 по жанрам (movies) --- */}
             <div className="section-block" style={{ maxWidth: 1200, margin: "20px auto 40px", padding: "0 12px", position: "relative" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div><h3 className="categories-title">Популярный Топ-10 по жанрам</h3></div>
-                    <CarouselControls page={topGenrePage} pages={topGenresPagesCount} onPrev={topPrev} onNext={topNext} />
+                    <h3 className="categories-title">Популярный Топ-10 по жанрам</h3>
+                    <CarouselControls page={topGenrePage} pages={Math.max(1, Math.ceil(genresMovies.length/TOP_GENRES_PER_PAGE))} onPrev={() => setTopGenrePage(p => Math.max(0, p-1))} onNext={() => setTopGenrePage(p => Math.min(Math.max(0, Math.ceil(genresMovies.length/TOP_GENRES_PER_PAGE)-1), p+1))} />
                 </div>
-
                 <div style={{ padding: "18px 0 40px" }}>
                     {renderTopGenresPage(topGenrePage)}
                 </div>
             </div>
 
-            {/* ---------------- MOVIES: В трендах ---------------- */}
+            {/* --- В трендах (movies) --- */}
             <div className="section-block" style={{ maxWidth: 1200, margin: "10px auto 60px", padding: "0 12px", position: "relative" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                     <h3 className="categories-title">В трендах</h3>
-                    <CarouselControls page={trendsPage} pages={trendsPagesCount} onPrev={trendsPrev} onNext={trendsNext} />
+                    <CarouselControls page={trendsPage} pages={Math.max(1, Math.ceil(trendingMovies.length/TRENDS_PER_PAGE))} onPrev={() => setTrendsPage(p => Math.max(0, p-1))} onNext={() => setTrendsPage(p => Math.min(Math.max(0, Math.ceil(trendingMovies.length/TRENDS_PER_PAGE)-1), p+1))} />
                 </div>
-
                 <div style={{ overflow: "hidden" }}>
                     {renderTrendsPage(trendsPage)}
                 </div>
             </div>
 
-            {/* ---------------- MOVIES: Новинки фильмов ---------------- */}
+            {/* --- Новинки фильмов --- */}
             <div className="section-block" style={{ maxWidth: 1200, margin: "10px auto 40px", padding: "0 12px", position: "relative" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                     <h3 className="categories-title">Новинки фильмов</h3>
-                    <CarouselControls page={newPage} pages={newPagesCount} onPrev={newPrev} onNext={newNext} />
                 </div>
-
                 <div style={{ overflow: "hidden" }}>
-                    {renderNewReleasesPage(newPage)}
+                    {renderNewReleasesPage(0)}
                 </div>
             </div>
 
-            {/* MOVIES must-watch */}
+            {/* --- Must-watch (movies) --- */}
             {renderMustWatch()}
 
-            {/* ======================== SERIES (дублируем полностью для сериалов) ======================== */}
+            {/* ---------------- СЕРИАЛЫ (дублируем, используя серии-states) ---------------- */}
+            <div style={{ height: 20 }} />
 
-            {/* NOTE: убрал крупный баннер для сериалов — должен быть только баннер фильмов вверху */}
-
-            {/* ---------------- SERIES: Наши жанры ---------------- */}
+            {/* Наши жанры (series) */}
             <div className="section-block" style={{ maxWidth: 1200, margin: "28px auto 0", padding: "0 12px", position: "relative" }}>
-                <button className="ms-btn ms-btn-watch">
-                    <span>Сериалы</span>
-                </button>
-
+                <button className="ms-btn ms-btn-watch"><span>Сериалы</span></button>
                 <div className="categories-head" style={{ alignItems: "center" }}>
-                    <div className="categories-left">
-                        <h3 className="categories-title">Наши жанры</h3>
-                    </div>
-
-                    <CarouselControls page={genresPageSeries} pages={genresPagesCountSeries} onPrev={genresPrevSeries} onNext={genresNextSeries} />
+                    <div className="categories-left"><h3 className="categories-title">Наши жанры</h3></div>
+                    <CarouselControls page={genresPageSeries} pages={Math.max(1, Math.ceil(genresSeries.length/GENRES_PER_PAGE))} onPrev={() => setGenresPageSeries(p => Math.max(0, p-1))} onNext={() => setGenresPageSeries(p => Math.min(Math.max(0, Math.ceil(genresSeries.length/GENRES_PER_PAGE)-1), p+1))} />
                 </div>
-
                 <div style={{ padding: "12px 0 28px" }}>
-                    {renderGenresPageSeries(genresPageSeries)}
+                    <div style={{ display: "flex", gap: 20 }}>
+                        {genresSeries.slice(genresPageSeries * GENRES_PER_PAGE, (genresPageSeries+1)*GENRES_PER_PAGE).map(g => (
+                            <article className="category-card" key={g.id}>
+                                <div className="poster-grid">
+                                    {(moviesByGenreSeries[g.id] || []).slice(0,4).map((m, idx) => (
+                                        <div key={idx} className="poster" style={{ backgroundImage: `url(${getPoster(m)})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                                    ))}
+                                </div>
+                                <div className="card-footer">
+                                    <span className="cat-title">{g.name}</span>
+                                    <button className="cat-go" aria-label={`Перейти в ${g.name}`}>➜</button>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            {/* ---------------- SERIES: Популярный Топ-10 по жанрам ---------------- */}
-            <div className="section-block" style={{ maxWidth: 1200, margin: "20px auto 40px", padding: "0 12px", position: "relative" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div><h3 className="categories-title">Популярный Топ-10 по жанрам</h3></div>
-                    <CarouselControls page={topGenrePageSeries} pages={topGenresPagesCountSeries} onPrev={topPrevSeries} onNext={topNextSeries} />
-                </div>
-
-                <div style={{ padding: "18px 0 40px" }}>
-                    {renderTopGenresPageSeries(topGenrePageSeries)}
-                </div>
-            </div>
-
-            {/* ---------------- SERIES: В трендах (сколько же, как у фильмов) ---------------- */}
-            <div className="section-block" style={{ maxWidth: 1200, margin: "10px auto 60px", padding: "0 12px", position: "relative" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <h3 className="categories-title">В трендах</h3>
-                    <CarouselControls page={trendsPageSeries} pages={trendsPagesCountSeries} onPrev={trendsPrevSeries} onNext={trendsNextSeries} />
-                </div>
-
-                <div style={{ overflow: "hidden" }}>
-                    {renderTrendsPageSeries(trendsPageSeries)}
-                </div>
-            </div>
-
-            {/* ---------------- SERIES: Новинки сериалов (левый овал — duration, правый — seasons) ---------------- */}
-            <div className="section-block" style={{ maxWidth: 1200, margin: "10px auto 40px", padding: "0 12px", position: "relative" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <h3 className="categories-title">Новинки сериалов</h3>
-                    <CarouselControls page={newPageSeries} pages={newPagesCountSeries} onPrev={newPrevSeries} onNext={newNextSeries} />
-                </div>
-
-                <div style={{ overflow: "hidden", position: "relative" }}>
-                    {renderNewReleasesPageSeries(newPageSeries)}
-                </div>
-            </div>
-
-            {/* SERIES must-watch */}
-            {renderMustWatchSeries()}
-
+            {/* Тренды / Новинки / Must-watch для сериалов — можно добавить рендеры аналогично фильмам, используя соответствующие состояния */}
             <AdBanner />
-
         </section>
     );
 }
