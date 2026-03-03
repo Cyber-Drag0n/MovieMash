@@ -1530,7 +1530,6 @@ main {
 
 /* Правый овал — совпадает по размерам/паддингу/типографике с общим .trend-badge (как левый) */
 .must-card .trend-badge.must-right {
-  /* match .trend-badge defaults */
   padding: 6px 8px;
   font-size: 12px;
   gap: 6px;
