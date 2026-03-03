@@ -1,0 +1,291 @@
+.account-page {
+    padding-top: 120px;
+    color: #ffffff;
+}
+
+.account-header {
+    display: flex;
+    gap: 24px;
+    padding: 28px;
+    border-radius: 12px;
+    border: 1px solid #262626;
+    background: #141414;
+}
+
+.avatar-wrapper {
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #1f1f1f;
+    border: 1px solid #2f2f2f;
+    flex-shrink: 0;
+}
+
+.avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 22px;
+}
+
+.user-info {
+    flex: 1;
+}
+
+.username-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.username {
+    font-size: 34px;
+}
+
+.edit-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid #2f2f2f;
+    background: #1a1a1a;
+    color: #e5e5e5;
+    cursor: pointer;
+}
+
+.watched-count {
+    margin-top: 12px;
+    display: flex;
+    gap: 10px;
+    color: #bfbfbf;
+}
+
+.count {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.account-tabs {
+    margin-top: 20px;
+    display: inline-flex;
+    gap: 8px;
+    background: #0f0f0f;
+    border: 1px solid #1f1f1f;
+    border-radius: 10px;
+    padding: 6px;
+}
+
+.account-tabs button {
+    border: 0;
+    background: transparent;
+    color: #bfbfbf;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.account-tabs button.active {
+    background: #1f1f1f;
+    color: #fff;
+}
+
+.account-content {
+    margin-top: 22px;
+    display: grid;
+    gap: 24px;
+}
+
+.account-carousel {
+    border: 1px solid #262626;
+    border-radius: 12px;
+    padding: 20px;
+    background: #141414;
+}
+
+.carousel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.carousel-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.ctrl-arrow {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid #262626;
+    background: #1a1a1a;
+    color: #fff;
+    cursor: pointer;
+}
+
+.ctrl-arrow:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.must-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.must-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    border: 1px solid #2a2a2a;
+    background: #0f0f0f;
+}
+
+.must-poster-wrap {
+    aspect-ratio: 16 / 10;
+}
+
+.must-poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.trend-badge {
+    position: absolute;
+    bottom: 10px;
+    border-radius: 999px;
+    padding: 6px 9px;
+    background: rgba(15, 15, 15, 0.92);
+    border: 1px solid #262626;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.must-left {
+    left: 10px;
+}
+
+.must-right {
+    right: 10px;
+}
+
+.badge-icon,
+.star-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.rating-row {
+    display: inline-flex;
+    align-items: center;
+}
+
+.votes-text {
+    color: #bfbfbf;
+}
+
+.comments-list,
+.placeholder {
+    border: 1px solid #262626;
+    border-radius: 12px;
+    background: #141414;
+    padding: 20px;
+}
+
+.comment-card {
+    border: 1px solid #262626;
+    border-radius: 10px;
+    background: #1a1a1a;
+    padding: 16px;
+}
+
+.comment-meta {
+    display: flex;
+    justify-content: space-between;
+}
+
+.comment-text {
+    color: #bfbfbf;
+    margin-top: 10px;
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.66);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 90;
+}
+
+.modal {
+    width: min(480px, 90vw);
+    border-radius: 12px;
+    border: 1px solid #262626;
+    background: #141414;
+    padding: 20px;
+}
+
+.modal-title {
+    margin-bottom: 16px;
+}
+
+.modal-form {
+    display: grid;
+    gap: 10px;
+}
+
+.modal-label {
+    color: #bfbfbf;
+}
+
+.modal-input {
+    width: 100%;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid #262626;
+    background: #1a1a1a;
+    color: #fff;
+    padding: 0 12px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.ghost-btn,
+.primary-btn {
+    border-radius: 8px;
+    padding: 10px 14px;
+    border: 1px solid #262626;
+    color: #fff;
+    cursor: pointer;
+}
+
+.ghost-btn {
+    background: #1a1a1a;
+}
+
+.primary-btn {
+    background: #e50000;
+    border-color: #e50000;
+}
+
+@media (max-width: 900px) {
+    .account-header {
+        flex-direction: column;
+    }
+
+    .must-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
