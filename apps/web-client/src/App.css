@@ -623,6 +623,7 @@
   margin: 40px 0 2px 0;
   padding: 0;
   overflow: hidden;
+  font-weight: 300;
 }
 
 /* затемнение сверху изображения */

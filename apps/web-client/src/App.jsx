@@ -13,6 +13,7 @@ import Subscriptions from "./pages/Subscriptions.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import AccountPage from "./pages/AccountPage.jsx";
+import MoviePage from "./pages/MoviePage.jsx";
 
 const normalizePath = (p) => {
     if (!p) return "/";
@@ -93,6 +94,8 @@ const App = () => {
                 {!isHome && path === "/auth/login" && <LoginPage navigate={navigate} />}
 
                 {!isHome && path === "/auth/register" && <RegisterPage navigate={navigate} />}
+
+                {!isHome && path.startsWith("/movie") && <MoviePage/>}
 
             </div>
 

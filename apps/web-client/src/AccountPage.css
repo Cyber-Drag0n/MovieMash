@@ -1,291 +1,577 @@
-.account-page {
-    padding-top: 120px;
+/* src/styles/AccountPage.css
+   Полный scoped CSS для страницы аккаунта.
+   Положите renew.ttf в public/ (путь /renew.ttf).
+   Положите ассеты: /example.jpg, /Time.svg, /star-filled.svg, /star-half.svg, /star-empty.svg,
+   /Arrow_left.svg, /Arrow_right.svg
+*/
+
+/* ---------------- font ---------------- */
+@font-face {
+    font-family: 'Renew';
+    src: url('/renew.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ---------------- top spacer (под фикс. navbar) ---------------- */
+.account-page .account-top-spacer {
+    height: var(--topbar-offset, 88px);
+    width: 100%;
+}
+
+/* ---------------- PROFILE (центр страницы, внутри — левый аватар, правый инфо) ---------------- */
+.account-page .profile-center {
+    display: flex;
+    justify-content: center; /* центр блока по горизонтали страницы */
+    padding: 8px 20px;
+    box-sizing: border-box;
+    margin-bottom: 28px;
+}
+
+.account-page .profile-main {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    max-width: 960px;
+    width: 100%;
+    justify-content: center;
+}
+
+/* Аватар (левая колонка) */
+.account-page .avatar-wrapper {
+    width: 140px;
+    height: 140px;
+    padding: 6px;
+    border-radius: 999px;
+    border: 3px solid #ff3b2f;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    box-shadow: 0 8px 28px rgba(0,0,0,0.6);
+}
+.account-page .avatar { width:100%; height:100%; object-fit:cover; border-radius:999px; }
+
+/* ПРАВАЯ КОЛОНКА — инфо, выровненная по левому краю (рядом с аватаром) */
+.account-page .profile-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+/* username-row: ник и справа от него edit button */
+.account-page .username-row {
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+/* применяем Renew только к никам */
+.account-page .username {
+    font-size: 36px;
+    margin: 0;
+    color: #efefef;
+}
+
+/* edit button — расположен справа от ника */
+.account-page .edit-btn {
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.04);
+    color: #efefef;
+    cursor: pointer;
+}
+
+/* watched count и tabs */
+.account-page .watched-count {
+    display:flex;
+    gap:8px;
+    align-items:baseline;
+    color:#bdbdbd;
+    margin-top: 8px;
+}
+.account-page .watched-count .count { font-weight:400; font-size:24px; color:#efefef; }
+
+.account-page .account-tabs {
+    display:flex;
+    gap:10px;
+    margin-top:12px;
+}
+.account-page .tab-btn {
+    padding:8px 12px;
+    border-radius:10px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.03);
+    color: #bdbdbd;
+    cursor: pointer;
+    font-weight:400;
+}
+.account-page .tab-btn.active {
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0));
+    color: #efefef;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.45);
+}
+
+/* ---------------- Carousel top/header ---------------- */
+.account-page .account-carousel {
+    margin: 26px auto 42px;
+    max-width: 1180px;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+.account-page .carousel-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+}
+.account-page .carousel-title {
+    margin-bottom: -20px;
+    font-size: 28px;
+    font-weight: 500;
     color: #ffffff;
 }
 
-.account-header {
-    display: flex;
-    gap: 24px;
-    padding: 28px;
-    border-radius: 12px;
-    border: 1px solid #262626;
-    background: #141414;
-}
-
-.avatar-wrapper {
-    width: 120px;
-    height: 120px;
-    border-radius: 999px;
-    overflow: hidden;
-    background: #1f1f1f;
-    border: 1px solid #2f2f2f;
-    flex-shrink: 0;
-}
-
-.avatar {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    padding: 22px;
-}
-
-.user-info {
-    flex: 1;
-}
-
-.username-row {
+/* ---------------- Controls (стрелки + линия) ---------------- */
+.account-page .categories-controls {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex: 0 0 auto;
+    align-self: center;
 }
 
-.username {
-    font-size: 34px;
-}
-
-.edit-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    border: 1px solid #2f2f2f;
-    background: #1a1a1a;
-    color: #e5e5e5;
+/* стилизованные стрелки (используем ваши Arrow_*.svg) */
+.account-page .ctrl-arrow {
+    background: #0F0F0F;
+    border: 1px solid #1F1F1F;
+    color: #fff;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
     cursor: pointer;
+    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
 }
+.account-page .ctrl-arrow img { width: 22px; height: 22px; object-fit: contain; }
+.account-page .ctrl-arrow:disabled { opacity: 0.25; cursor: default; }
 
-.watched-count {
-    margin-top: 12px;
-    display: flex;
-    gap: 10px;
-    color: #bfbfbf;
-}
-
-.count {
-    color: #ffffff;
-    font-weight: 700;
-}
-
-.account-tabs {
-    margin-top: 20px;
+/* линия-сегменты: показываем N сегментов (pages) */
+.account-page .progress-line {
     display: inline-flex;
     gap: 8px;
-    background: #0f0f0f;
-    border: 1px solid #1f1f1f;
-    border-radius: 10px;
-    padding: 6px;
-}
-
-.account-tabs button {
-    border: 0;
-    background: transparent;
-    color: #bfbfbf;
-    padding: 8px 14px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.account-tabs button.active {
-    background: #1f1f1f;
-    color: #fff;
-}
-
-.account-content {
-    margin-top: 22px;
-    display: grid;
-    gap: 24px;
-}
-
-.account-carousel {
-    border: 1px solid #262626;
-    border-radius: 12px;
-    padding: 20px;
-    background: #141414;
-}
-
-.carousel-header {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 14px;
-}
-
-.carousel-controls {
-    display: flex;
-    gap: 10px;
-}
-
-.ctrl-arrow {
-    width: 34px;
-    height: 34px;
+    padding: 6px 10px;
+    background: rgba(0,0,0,0.25);
     border-radius: 8px;
-    border: 1px solid #262626;
-    background: #1a1a1a;
-    color: #fff;
-    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.03);
+    min-width: 120px;
+    justify-content: center;
+}
+.account-page .progress-seg {
+    width: 28px;
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    display: inline-block;
+}
+.account-page .progress-seg.active {
+    background: linear-gradient(90deg, rgba(229, 0, 0, 1), #380000);
 }
 
-.ctrl-arrow:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
+/* ---------------- Carousel row / page (мы показываем фикс. группу карточек) ---------------- */
+.account-page .must-row.pages {
+    display:flex;
+    gap:22px;
+    justify-content:flex-start;
+    align-items:flex-start;
+    padding-bottom:8px;
+    /* прячем полосу, если неожиданно появится */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
+.account-page .must-row.pages::-webkit-scrollbar { display: none; }
 
-.must-row {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 14px;
-}
-
+/* ---------------- Your carousel styles (merged from your snippet) ---------------- */
+/* Card (используйте вашу структуру: картинка почти полностью, под ней бейджи) */
+.account-page .must-card,
 .must-card {
+    /* width 220px — подогнано под прежнюю версию; измените если нужно */
     position: relative;
-    overflow: hidden;
-    border-radius: 10px;
-    border: 1px solid #2a2a2a;
-    background: #0f0f0f;
+    width: 280px;
+    height: 320px;
+    border-radius: 12px;
+    overflow: visible;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+    background: transparent;
 }
 
+/* poster wrapper covers majority of card */
+.account-page .must-poster-wrap,
 .must-poster-wrap {
-    aspect-ratio: 16 / 10;
+    position: relative;
+    width: 100%;
+    height: calc(100% - 40px); /* постер почти всё окно */
+    border-radius: 10px;
+    overflow: hidden;
+    background: #0a0a0a;
 }
-
+.account-page .must-poster,
 .must-poster {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
+    transform: translateZ(0);
+    transition: transform .18s ease, filter .18s ease;
+    border-radius: 8px;
 }
+.account-page .must-poster-wrap:hover .must-poster,
+.must-poster-wrap:hover .must-poster { transform: scale(1.02); filter: brightness(1.03); }
 
-.trend-badge {
+/* position badges relative to .must-card (external frame) */
+.account-page .must-card .trend-badge,
+.must-card .trend-badge {
     position: absolute;
-    bottom: 10px;
-    border-radius: 999px;
-    padding: 6px 9px;
-    background: rgba(15, 15, 15, 0.92);
-    border: 1px solid #262626;
+    bottom: 12px;
+    z-index: 12;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 12px;
+    padding: 6px 8px;
+    border-radius: 999px;
+    background: rgba(10,10,10,0.85);
+    color: #fff;
+    font-size: 18px;
+    border: 1px solid rgba(255,255,255,0.03);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.45);
+    white-space: nowrap;
 }
 
-.must-left {
-    left: 10px;
-}
+/* left badge (time) */
+.account-page .must-left,
+.must-left { left: 8px; }
 
+/* right badge: stars (+ votes for watchlist variant) */
+.account-page .must-right,
 .must-right {
-    right: 10px;
-}
-
-.badge-icon,
-.star-icon {
-    width: 14px;
-    height: 14px;
-}
-
-.rating-row {
+    right: 8px;
     display: inline-flex;
     align-items: center;
+    gap: 8px;
 }
 
-.votes-text {
-    color: #bfbfbf;
-}
+/* rating row */
+.account-page .rating-row,
+.rating-row { display: inline-flex; gap: 6px; align-items:center; }
+.account-page .star-icon,
+.star-icon { width: 14px; height: 14px; object-fit: contain; display:inline-block; }
 
-.comments-list,
-.placeholder {
-    border: 1px solid #262626;
+/* votes text (only for watchlist) */
+.account-page .votes-text,
+.votes-text { font-size: 18px; color: #fff; }
+
+/* ---------------- New-card / new releases (kept from original) ---------------- */
+.account-page .new-card,
+.new-card {
+    position: relative;
+    width: calc((1200px - 4 * 22px) / 5);
+    height: 280px;
+    min-width: 160px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
     border-radius: 12px;
-    background: #141414;
-    padding: 20px;
+    padding: 12px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255,255,255,0.02);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
 }
-
-.comment-card {
-    border: 1px solid #262626;
+.account-page .new-poster-wrap,
+.new-poster-wrap {
+    position: relative;
+    width: 100%;
+    height: 215px;
     border-radius: 10px;
-    background: #1a1a1a;
-    padding: 16px;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
+    padding: 0;
+    box-sizing: border-box;
+    border: 1px solid rgba(255,255,255,0.02);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.6);
 }
-
-.comment-meta {
-    display: flex;
-    justify-content: space-between;
+.account-page .new-poster,
+.new-poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transform: translateZ(0);
+    transition: transform .18s ease, filter .18s ease;
+    border-radius: 10px;
 }
-
-.comment-text {
-    color: #bfbfbf;
-    margin-top: 10px;
-}
-
-.modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.66);
-    display: flex;
+.account-page .new-badge,
+.new-badge {
+    position: absolute;
+    bottom: 12px;
+    z-index: 8;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    z-index: 90;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(10,10,10,0.85);
+    color: #fff;
+    font-weight: 400;
+    font-size: 18px;
+    border: 1px solid rgba(255,255,255,0.03);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.5);
+}
+.account-page .new-badge-text,
+.new-badge-text { line-height: 1; font-size: 18px; color: #fff; }
+.account-page .new-card .card-footer,
+.new-card .card-footer,
+.account-page .new-card .cat-title,
+.new-card .cat-title,
+.account-page .new-card .cat-go,
+.new-card .cat-go { display: none !important; }
+
+.badge-text {
+    font-size: 12px;
+    color: #fff;
+    font-weight: 400;
 }
 
-.modal {
-    width: min(480px, 90vw);
-    border-radius: 12px;
-    border: 1px solid #262626;
-    background: #141414;
+/* ---------------- Modal / forms (scoped) ---------------- */
+.account-page .modal-overlay {
+    position: fixed;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: rgba(0,0,0,0.6);
+    z-index: 9999;
     padding: 20px;
 }
-
-.modal-title {
-    margin-bottom: 16px;
+.account-page .modal-card {
+    width: 760px;
+    max-width: 96%;
+    background: linear-gradient(180deg,#0f0f0f,#0b0b0b);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.8);
+    border:1px solid rgba(255,255,255,0.03);
 }
-
-.modal-form {
-    display: grid;
-    gap: 10px;
-}
-
-.modal-label {
-    color: #bfbfbf;
-}
-
-.modal-input {
+.account-page .account-input {
     width: 100%;
-    height: 40px;
-    border-radius: 8px;
-    border: 1px solid #262626;
-    background: #1a1a1a;
-    color: #fff;
-    padding: 0 12px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 10px;
+    color: #efefef;
+    border:1px solid rgba(255,255,255,0.03);
+    box-sizing:border-box;
 }
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 8px;
+.account-page .btn-choose {
+    display:inline-block;
+    padding:10px 14px;
+    background: rgba(255,255,255,0.03);
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.04);
+    color:#efefef;
+    cursor:pointer;
 }
-
-.ghost-btn,
-.primary-btn {
-    border-radius: 8px;
-    padding: 10px 14px;
-    border: 1px solid #262626;
-    color: #fff;
-    cursor: pointer;
+.account-page .avatar-preview {
+    width:84px;
+    height:84px;
+    border-radius:999px;
+    overflow:hidden;
+    border:3px solid #ff3b2f;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 }
+.account-page .avatar-preview img { width:100%; height:100%; object-fit:cover; }
 
-.ghost-btn {
-    background: #1a1a1a;
-}
+/* modal actions */
+.account-page .modal-actions { display:flex; justify-content:center; gap:12px; margin-top:12px; }
+.account-page .btn-save { background: linear-gradient(180deg,#ff3b2f,#c71f17); color:#fff; padding:10px 16px; border-radius:10px; border:0; font-weight:400; cursor:pointer; }
+.account-page .btn-cancel { padding:10px 14px; border-radius:10px; background:transparent; border:1px solid rgba(255,255,255,0.04); color:#bdbdbd; cursor:pointer; }
 
-.primary-btn {
-    background: #e50000;
-    border-color: #e50000;
-}
-
+/* ---------------- responsive tweaks ---------------- */
 @media (max-width: 900px) {
-    .account-header {
-        flex-direction: column;
-    }
+    .account-page .profile-main { flex-direction: column; align-items:center; gap:12px; }
+    .account-page .avatar-wrapper { width:110px; height:110px; }
+    .account-page .username { font-size: 28px; }
+    .must-card { width: 48%; min-width: 160px; height: 260px; }
+    .account-page .new-card { width: 45%; min-width: 160px; }
+}
+/* ---------------- Comments (cards) ---------------- */
+.account-page .comments-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 20px 60px;
+    box-sizing: border-box;
+}
 
-    .must-row {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+/* контейнер списка комментариев (центруем по ширине) */
+.account-page .comments-list {
+    max-width: 1180px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-bottom: 22px;
+}
+
+/* отдельная карточка комментария */
+.account-page .comment-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.02));
+    border: 1px solid rgba(255,255,255,0.03);
+    padding: 18px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.6);
+}
+
+/* левые блоки карточки: мета и текст */
+.account-page .comment-left { flex: 1 1 auto; min-width: 0; }
+.account-page .comment-meta { display:flex; flex-direction:column; gap:4px; }
+.account-page .comment-title { font-size: 16px; color: #efefef; margin: 0; }
+.account-page .comment-sub { font-size: 12px; color: #bdbdbd; display:block; margin-top:2px; }
+
+/* основной текст комментария */
+.account-page .comment-text {
+    margin-top: 8px;
+    color: #cfcfcf;
+    line-height: 1.45;
+    font-size: 14px;
+    margin-bottom: 0;
+    word-break: break-word;
+}
+
+/* правая колонка карточки: рейтинг + кнопка */
+.account-page .comment-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+/* стрелка перехода (простая кнопка с svg) */
+.account-page .comment-go {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.03);
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+}
+.account-page .comment-go img { width:18px; height:18px; object-fit:contain; }
+
+/* реклама внутри комментариев */
+.account-page .comments-ad {
+    max-width: 1180px;
+    width: 100%;
+    margin-top: 12px;
+}
+
+/* Адаптив: на узких экранах правая колонка уходит вниз */
+@media (max-width: 760px) {
+    .account-page .comment-card {
+        flex-direction: column;
+        align-items: stretch;
     }
+    .account-page .comment-right { flex-direction: row; justify-content: space-between; width: 100%; margin-top: 12px; }
+    .account-page .comment-go { margin-left: auto; }
+}
+/* (добавьте в конец AccountPage.css) */
+/* Звёзды в овале — используется тем же образом, как в AccountCarousel */
+/* ---- Выравниваем звезды и число по горизонтали (число справа от звёзд) ---- */
+
+/* правая колонка в карточке комментария: показываем элементы в одну строку */
+.account-page .comment-right {
+    display: flex;
+    flex-direction: row;      /* строго горизонтально */
+    align-items: center;      /* центрируем по вертикали (звезды и число будут на одной линии) */
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+/* если где-то ещё был .star-pill — оставляем, но он не влияет на новое поведение */
+
+/* подгоняем овальную обёртку и число, чтобы не переносились */
+.account-page .star-oval {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(10,10,10,0.85);
+    border: 1px solid rgba(255,255,255,0.03);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.45);
+    white-space: nowrap;      /* не даём звёздам переноситься на новую строку */
+}
+
+/* число рейтинга — рядом со звёздами */
+.account-page .rating-number {
+    font-size: 14px;
+    font-weight: 300;
+    color: #ffffff;
+    margin-right: 16px;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* правый бейдж у карточки (карусель) — тоже в строку */
+.account-page .must-right {
+    right: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+/* Адаптив: на очень узких экранах снова допускаем перенос, но число всё равно будет рядом со звёздами */
+@media (max-width: 420px) {
+    .account-page .comment-right {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .account-page .star-oval, .account-page .rating-number {
+        /* уменьшаем немного при необходимости, чтобы влезало */
+        padding: 4px 8px;
+        font-size: 14px;
+    }
+}
+
+.form-label{
+    color: white;
+}
+
+.modal-title{
+    color: white;
+    text-align: center;
+}
+.rating-number{
+    margin-left: 4px;
+    margin-top: 4px;
 }
