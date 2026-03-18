@@ -8,6 +8,7 @@ import Plans from "./components/Plans";
 import AdBanner from "./components/AdBanner";
 import Footer from "./components/Footer";
 import MoviesAndSeries from "./pages/MoviesAndSeries";
+import GenrePage from "./pages/GenrePage.jsx";
 import Support from "./pages/Support.jsx";
 import Subscriptions from "./pages/Subscriptions.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
@@ -28,10 +29,8 @@ const App = () => {
             setPath(n);
             return;
         }
-        // пушим нормализованный путь
         window.history.pushState({}, "", n);
         setPath(n);
-        // поведение: auto (валидно)
         window.scrollTo({ top: 0, behavior: "auto" });
     }, []);
 
@@ -79,15 +78,19 @@ const App = () => {
                     </>
                 )}
 
-                {!isHome && path.startsWith("/media") && <MoviesAndSeries />}
+                {!isHome && path.startsWith("/media/genre/") && (
+                    <GenrePage path={path} navigate={navigate} />
+                )}
 
-                {!isHome && path.startsWith("/support") && <Support/>}
+                {!isHome && path.startsWith("/media") && !path.startsWith("/media/genre/") && (
+                    <MoviesAndSeries navigate={navigate} />
+                )}
 
-                {!isHome && path.startsWith("/subscriptions") && <Subscriptions/>}
+                {!isHome && path.startsWith("/support") && <Support />}
 
-                {/* передаём navigate в AuthPage */}
-                {!isHome && path.startsWith("/auth") && <AuthPage navigate={navigate}/>}
+                {!isHome && path.startsWith("/subscriptions") && <Subscriptions />}
 
+                {!isHome && path.startsWith("/auth") && <AuthPage navigate={navigate} />}
             </div>
 
             <Footer />
