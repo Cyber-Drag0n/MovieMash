@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import Header from "./Header";
 import "./App.css";
@@ -92,16 +91,14 @@ const App = () => {
                 {!isHome && path.startsWith("/support") && <Support />}
 
                 {!isHome && path.startsWith("/subscriptions") && <Subscriptions />}
-                {!isHome && path.startsWith("/account") && <AccountPage/>}
 
-                {/* Страницы авторизации */}
-                {!isHome && path === "/auth/login" && <LoginPage navigate={navigate} />}
+                {!isHome && path.startsWith("/account") && <AccountPage />}
 
-                {!isHome && path === "/auth/register" && <RegisterPage navigate={navigate} />}
+                {!isHome && path.startsWith("/auth/login") && <LoginPage navigate={navigate} />}
 
-                {!isHome && path.startsWith("/movie") && <MoviePage/>}
+                {!isHome && path.startsWith("/auth/register") && <RegisterPage navigate={navigate} />}
 
-                {!isHome && path.startsWith("/auth") && <AuthPage navigate={navigate} />}
+                {!isHome && path.startsWith("/movie") && <MoviePage navigate={navigate} />}
             </div>
 
             <Footer />

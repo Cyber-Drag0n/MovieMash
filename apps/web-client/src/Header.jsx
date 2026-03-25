@@ -1,5 +1,4 @@
-// src/Header.jsx
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./Header.css";
 
 const navItems = [
@@ -15,18 +14,54 @@ const icons = [
     { src: "/Account.svg", alt: "Профиль", href: "/account", type: "link" },
 ];
 
-// --- MOCK results (замени на fetch к API при необходимости) ---
-const MOCK_RESULTS = [
-    { id: 1, title: "Мстители: Финал", subtitle: "Фильм • 2019", img: "/avengers.png", path: "/media/1" },
-    { id: 2, title: "Джон Уик 4", subtitle: "Фильм • 2023", img: "/john-wick.png", path: "/media/2" },
-    { id: 3, title: "Матрица: Воскрешение", subtitle: "Фильм • 2021", img: "/matrix.png", path: "/media/3" },
-    { id: 4, title: "Бумажный дом", subtitle: "Сериал • 4 сезона", img: "/tdp.jpg", path: "/media/tdp" },
-    { id: 5, title: "Во все тяжкие", subtitle: "Сериал • 5 сезонов", img: "/bb.jpg", path: "/media/bb" },
-    { id: 6, title: "Лучшие приколы", subtitle: "Сериал • 1 сезон", img: "/ex.jpg", path: "/media/ex" },
-];
+const TMDB_BASE = "https://api.themoviedb.org/3";
+const LANG = "ru-RU";
+const IMAGE_PREFIX = "https://image.tmdb.org/t/p/w154";
+
+function getBearerFromEnv() {
+    try {
+        if (typeof window !== "undefined" && import.meta?.env?.VITE_TMDB_BEARER) {
+            return import.meta.env.VITE_TMDB_BEARER;
+        }
+    } catch {
+        // ignore
+    }
+    return null;
+}
+
+async function fetchJson(url, bearer, signal) {
+    const res = await fetch(url, {
+        headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${bearer}`,
+        },
+        signal,
+    });
+
+    if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`${res.status} ${res.statusText} ${txt}`);
+    }
+
+    return res.json();
+}
+
+function mediaPath(item) {
+    const type = item?.media_type === "tv" || item?.name ? "tv" : "movie";
+    return `/movie/${type}/${item?.id}`;
+}
+
+function resultTitle(item) {
+    return item?.title || item?.name || "Без названия";
+}
+
+function resultSubtitle(item) {
+    const year = item?.release_date?.slice(0, 4) || item?.first_air_date?.slice(0, 4) || "—";
+    const type = item?.media_type === "tv" || item?.name ? "Сериал" : "Фильм";
+    return `${type} • ${year}`;
+}
 
 const Header = ({ navigate, currentPath }) => {
-    // Search states
     const [searchOpen, setSearchOpen] = useState(false);
     const [query, setQuery] = useState("");
     const [results, setResults] = useState([]);
@@ -36,28 +71,147 @@ const Header = ({ navigate, currentPath }) => {
     const overlayRef = useRef(null);
     const toggleBtnRef = useRef(null);
 
-    // Notifications states
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [notifEnabled, setNotifEnabled] = useState(true);
     const notifRef = useRef(null);
     const notifBtnRef = useRef(null);
 
-    // Keep search results in sync when opening/closing
+    const bearer = useMemo(() => getBearerFromEnv(), []);
+
+    const goto = (path) => {
+        setSearchOpen(false);
+        setNotificationsOpen(false);
+        setQuery("");
+        setResults([]);
+        setActiveIndex(-1);
+
+        if (navigate) navigate(path);
+        else window.location.href = path;
+    };
+
+    const handleNavClick = (e, to) => {
+        if (navigate) {
+            e.preventDefault();
+            navigate(to);
+        }
+    };
+
     useEffect(() => {
-        if (searchOpen) {
-            // close notifications if open
-            setNotificationsOpen(false);
-            setTimeout(() => inputRef.current?.focus(), 0);
-            setActiveIndex(-1);
-            setResults(MOCK_RESULTS.slice(0, 6));
-        } else {
+        if (!searchOpen) {
             setQuery("");
             setResults([]);
             setActiveIndex(-1);
+            return;
         }
-    }, [searchOpen]);
 
-    // Search keyboard handling and outside-click close
+        setNotificationsOpen(false);
+        setTimeout(() => inputRef.current?.focus(), 0);
+        setActiveIndex(-1);
+
+        const controller = new AbortController();
+
+        (async () => {
+            try {
+                if (!bearer) {
+                    setResults([]);
+                    return;
+                }
+
+                const res = await fetchJson(
+                    `${TMDB_BASE}/trending/movie/week?language=${LANG}`,
+                    bearer,
+                    controller.signal
+                );
+
+                const initial = Array.isArray(res?.results) ? res.results.slice(0, 6) : [];
+                setResults(
+                    initial.map((item) => ({
+                        id: `${item?.media_type || "movie"}-${item?.id}`,
+                        title: resultTitle(item),
+                        subtitle: resultSubtitle(item),
+                        img: item?.poster_path ? `${IMAGE_PREFIX}${item.poster_path}` : "/example.jpg",
+                        path: mediaPath(item),
+                    }))
+                );
+            } catch {
+                if (!controller.signal.aborted) {
+                    setResults([]);
+                }
+            }
+        })();
+
+        return () => controller.abort();
+    }, [searchOpen, bearer]);
+
+    useEffect(() => {
+        if (!searchOpen) return;
+
+        const controller = new AbortController();
+        const t = setTimeout(async () => {
+            try {
+                if (!bearer) {
+                    setResults([]);
+                    return;
+                }
+
+                if (!query.trim()) {
+                    const [moviesRes, tvRes] = await Promise.all([
+                        fetchJson(`${TMDB_BASE}/trending/movie/week?language=${LANG}`, bearer, controller.signal),
+                        fetchJson(`${TMDB_BASE}/trending/tv/week?language=${LANG}`, bearer, controller.signal),
+                    ]);
+
+                    const merged = [
+                        ...(Array.isArray(moviesRes?.results) ? moviesRes.results : []),
+                        ...(Array.isArray(tvRes?.results) ? tvRes.results : []),
+                    ]
+                        .filter((it) => it?.id)
+                        .slice(0, 8)
+                        .map((item) => ({
+                            id: `${item?.media_type || (item?.title ? "movie" : "tv")}-${item?.id}`,
+                            title: resultTitle(item),
+                            subtitle: resultSubtitle(item),
+                            img: item?.poster_path ? `${IMAGE_PREFIX}${item.poster_path}` : "/example.jpg",
+                            path: mediaPath(item),
+                        }));
+
+                    setResults(merged);
+                    setActiveIndex(merged.length ? 0 : -1);
+                    return;
+                }
+
+                const data = await fetchJson(
+                    `${TMDB_BASE}/search/multi?query=${encodeURIComponent(query)}&include_adult=false&language=${LANG}&page=1`,
+                    bearer,
+                    controller.signal
+                );
+
+                const filtered = (Array.isArray(data?.results) ? data.results : [])
+                    .filter((item) => item?.id && (item?.media_type === "movie" || item?.media_type === "tv"))
+                    .slice(0, 8)
+                    .map((item) => ({
+                        id: `${item.media_type}-${item.id}`,
+                        title: resultTitle(item),
+                        subtitle: resultSubtitle(item),
+                        img: item?.poster_path ? `${IMAGE_PREFIX}${item.poster_path}` : "/example.jpg",
+                        path: mediaPath(item),
+                    }));
+
+                setResults(filtered);
+                setActiveIndex(filtered.length ? 0 : -1);
+            } catch {
+                if (!controller.signal.aborted) {
+                    setResults([]);
+                    setActiveIndex(-1);
+                }
+            }
+        }, 300);
+
+        return () => {
+            clearTimeout(t);
+            controller.abort();
+        };
+    }, [query, searchOpen, bearer]);
+
     useEffect(() => {
         if (!searchOpen) return;
 
@@ -100,7 +254,6 @@ const Header = ({ navigate, currentPath }) => {
         };
     }, [searchOpen, results, activeIndex]);
 
-    // Notifications: close on ESC or click outside
     useEffect(() => {
         if (!notificationsOpen) return;
 
@@ -122,6 +275,7 @@ const Header = ({ navigate, currentPath }) => {
         document.addEventListener("mousedown", handleDocClick);
         document.addEventListener("touchstart", handleDocClick);
         document.addEventListener("keydown", handleKey);
+
         return () => {
             document.removeEventListener("mousedown", handleDocClick);
             document.removeEventListener("touchstart", handleDocClick);
@@ -129,39 +283,9 @@ const Header = ({ navigate, currentPath }) => {
         };
     }, [notificationsOpen]);
 
-    // Filter results client-side (replace with debounced API as needed)
-    useEffect(() => {
-        if (!query) {
-            setResults(MOCK_RESULTS.slice(0, 6));
-            setActiveIndex(-1);
-            return;
-        }
-        const q = query.toLowerCase();
-        const filtered = MOCK_RESULTS.filter(
-            (r) => r.title.toLowerCase().includes(q) || r.subtitle.toLowerCase().includes(q)
-        ).slice(0, 8);
-        setResults(filtered);
-        setActiveIndex(filtered.length ? 0 : -1);
-    }, [query]);
-
     const normalized = (p) => {
         if (!p) return "/";
         return p.replace(/\/+$/, "") || "/";
-    };
-
-    const handleNavClick = (e, to) => {
-        if (navigate) {
-            e.preventDefault();
-            navigate(to);
-        }
-    };
-
-    const goto = (path) => {
-        // close overlays and navigate
-        setSearchOpen(false);
-        setNotificationsOpen(false);
-        if (navigate) navigate(path);
-        else window.location.href = path;
     };
 
     return (
@@ -198,17 +322,22 @@ const Header = ({ navigate, currentPath }) => {
                                         key={ic.src}
                                         ref={toggleBtnRef}
                                         type="button"
-                                        className={`icon-btn search-toggle`}
+                                        className="icon-btn search-toggle"
                                         aria-label={searchOpen ? "Закрыть поиск" : "Открыть поиск"}
                                         title={searchOpen ? "Закрыть поиск" : "Поиск"}
                                         aria-expanded={searchOpen}
                                         onClick={() => {
-                                            // open search, close notifications
                                             setNotificationsOpen(false);
                                             setSearchOpen((s) => !s);
                                         }}
                                     >
-                                        {searchOpen ? <span className="search-close-sign" aria-hidden="true">✕</span> : <img src={ic.src} alt={ic.alt} className="icon-img" />}
+                                        {searchOpen ? (
+                                            <span className="search-close-sign" aria-hidden="true">
+                                                ✕
+                                            </span>
+                                        ) : (
+                                            <img src={ic.src} alt={ic.alt} className="icon-img" />
+                                        )}
                                     </button>
                                 );
                             }
@@ -225,7 +354,6 @@ const Header = ({ navigate, currentPath }) => {
                                             aria-haspopup="dialog"
                                             aria-expanded={notificationsOpen}
                                             onClick={() => {
-                                                // open notifications, close search
                                                 setSearchOpen(false);
                                                 setNotificationsOpen((v) => !v);
                                             }}
@@ -236,7 +364,6 @@ const Header = ({ navigate, currentPath }) => {
                                 );
                             }
 
-                            // default link (account)
                             return (
                                 <a
                                     key={ic.src}
@@ -251,7 +378,6 @@ const Header = ({ navigate, currentPath }) => {
                             );
                         })}
 
-                        {/* Notifications popup (outside of icons mapping so it's easy to position) */}
                         <div
                             ref={notifRef}
                             className={`notif-popup ${notificationsOpen ? "open" : ""}`}
@@ -279,7 +405,6 @@ const Header = ({ navigate, currentPath }) => {
                 </div>
             </header>
 
-            {/* Overlay search — поверх header (top/left/right совпадают с header) */}
             {searchOpen && (
                 <div
                     className="search-overlay"
@@ -293,8 +418,11 @@ const Header = ({ navigate, currentPath }) => {
                             className="search-form"
                             onSubmit={(e) => {
                                 e.preventDefault();
-                                if (results[activeIndex]) goto(results[activeIndex].path);
-                                else if (query) goto(`/search?q=${encodeURIComponent(query)}`);
+                                if (results[activeIndex]) {
+                                    goto(results[activeIndex].path);
+                                } else if (results[0]) {
+                                    goto(results[0].path);
+                                }
                             }}
                             role="search"
                         >
@@ -306,7 +434,7 @@ const Header = ({ navigate, currentPath }) => {
                                 ref={inputRef}
                                 className="search-input"
                                 type="search"
-                                placeholder="Название фильма, сериала или имя актёра, режиссёра"
+                                placeholder="Название фильма или сериала"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 aria-label="Поле поиска"
@@ -315,12 +443,16 @@ const Header = ({ navigate, currentPath }) => {
                                 aria-activedescendant={activeIndex >= 0 ? `result-${results[activeIndex]?.id}` : undefined}
                             />
 
-                            <button type="button" className="search-popup-close" aria-label="Закрыть поиск" onClick={() => setSearchOpen(false)}>
+                            <button
+                                type="button"
+                                className="search-popup-close"
+                                aria-label="Закрыть поиск"
+                                onClick={() => setSearchOpen(false)}
+                            >
                                 ✕
                             </button>
                         </form>
 
-                        {/* dropdown results */}
                         <div className="search-results-wrapper" role="region" aria-label="Результаты поиска">
                             <ul id="search-results" role="listbox" className="search-results">
                                 {results.length === 0 ? (
@@ -336,7 +468,12 @@ const Header = ({ navigate, currentPath }) => {
                                             onMouseEnter={() => setActiveIndex(idx)}
                                             onClick={() => goto(r.path)}
                                         >
-                                            <img src={r.img} alt="" className="result-thumb" onError={(e) => (e.currentTarget.src = "/example.jpg")} />
+                                            <img
+                                                src={r.img}
+                                                alt=""
+                                                className="result-thumb"
+                                                onError={(e) => (e.currentTarget.src = "/example.jpg")}
+                                            />
                                             <div className="result-meta">
                                                 <div className="result-title">{r.title}</div>
                                                 <div className="result-sub">{r.subtitle}</div>

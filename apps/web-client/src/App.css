@@ -994,40 +994,83 @@ main {
 }
 
 
-/* Стили для top-card (Топ-10 в) — чтобы выглядеть как у вас */
-.top-card {
-  width: 260px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.top-genres-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 22px;
+  align-items: start;
 }
 
-.poster-wrap {
-  position: relative;
+.category-card.top-card {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  padding: 14px;
+  min-height: 320px;
+  box-sizing: border-box;
   border-radius: 12px;
-  overflow: hidden;
-  background: #0a0a0a;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
+  border: 1px solid rgba(255,255,255,0.02);
   box-shadow: 0 8px 20px rgba(0,0,0,0.6);
 }
 
-/* бейдж "Топ-10 в" */
-.top-badge {
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  z-index: 6;
-  background: #e50000;
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 10px;
-  font-weight: 400;
-  font-size: 13px;
+.category-card.top-card .poster-wrap {
+  position: relative;
 }
 
-/* уменьшаем высоту маленькой poster-grid внутри top-card под новый размер */
-.top-card .poster-grid .poster {
-  height: 78px; /* визуально подогнал для top-card */
+.category-card.top-card .poster-grid {
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.category-card.top-card .poster-grid .poster {
+  height: 120px;
+}
+
+.category-card.top-card .card-footer.top-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+
+.category-card.top-card .cat-title,
+.categories-title,
+.faq-title,
+.body-text,
+.muted-text {
+  font-weight: 400;
+}
+
+.category-card.top-card .cat-go {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+@media (max-width: 1200px) {
+  .top-genres-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .category-card.top-card .poster-grid .poster {
+    height: 140px;
+  }
+}
+
+@media (max-width: 900px) {
+  .top-genres-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .top-genres-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 
 /* адаптив */
@@ -1042,73 +1085,31 @@ main {
   .trend-card { min-width: 160px; flex: 0 0 auto; }
   .trend-poster-wrap { min-width: 160px; height: 190px; }
 }
-/* --------------------
-   Популярный Топ-10 по жанрам
-   (большие карточки — 4 в ряд на десктопе)
-   -------------------- */
-
-/* увеличенный вариант карточки для Top-10 (наследует .category-card) */
-.category-card.top-card {
-  /* 4 карточки в строке на ширине 1200 (учтены промежутки) */
-  width: calc((1200px - 3 * 32px) / 4);
-  max-width: 300px;      /* защищает от слишком широких блоков */
-  min-width: 220px;      /* защищает на узких экранах */
-  padding: 14px;         /* чуть больше внутреннего паддинга */
-  min-height: 320px;     /* увеличенная высота (больше контента) */
-  box-sizing: border-box;
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
-  border: 1px solid rgba(255,255,255,0.02);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-}
-
-/* для top-card делаем постеры крупнее, внутри 2x2 сетки */
-.category-card.top-card .poster-grid {
-  gap: 10px;
-}
-.category-card.top-card .poster {
-  height: 120px; /* крупнее (вместо 120px у обычных карточек) */
-  border-radius: 8px;
-}
-
-/* обёртка для верхнего бейджа внутри карточки (позиционируется поверх постеров) */
-.category-card.top-card .poster-wrap {
-  position: relative;
-  /* чтобы .top-badge позиционировался относительно этой области */
-}
 
 /* Общий стиль для top-badge */
-.top-badge {
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  z-index: 6;
-  background: #e50000;
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 10px;
-  font-weight: 400;
-  font-size: 13px;
-  transform: translateX(-15px); /* ← сдвигаем левее на 20px */
-  margin-top: 250px;
-}
 
 /* Для категорийной карточки */
-.category-card.top-card .top-badge {
+.category-card.top-card .card-footer.top-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.category-card.top-card .top-badge,
+.top-badge {
+  margin-bottom: 60px;
   position: absolute;
-  left: 12px;
-  top: 12px;
-  z-index: 6;
-  background: #e50914;
-  color: #fff;
-  padding: 6px 10px;
+  transform: none;
+  padding: 6px 11px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 400;
+  background: #e50914;
+  color: #fff;
   box-shadow: 0 6px 18px rgba(0,0,0,0.45);
-  transform: translateX(-15px); /* ← сдвигаем левее на 20px */
 }
-
 /* футер карточки (название + стрелка) — оставляем знакомый стиль */
 .category-card.top-card .card-footer {
   margin-top: 12px;
@@ -1353,7 +1354,7 @@ main {
 }
 
 /* текст внутри бейджа */
-.new-badge-text { line-height: 1; font-size: 13px; color: #fff; }
+.new-badge-text { font-size:10px; line-height: 1; color: #fff; font-weight: 200; }
 
 /* скрываем унаследованные подписи (если есть) */
 .new-card .card-footer,
@@ -1577,3 +1578,27 @@ main {
   flex-shrink: 0;
 }
 
+
+.trend-badge,
+.new-badge,
+.must-card .trend-badge {
+  overflow: visible;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.trend-badge img,
+.new-badge img {
+  flex: 0 0 auto;
+}
+
+.badge-text,
+.new-badge-text {
+  white-space: nowrap;
+  line-height: 1;
+  font-weight: 400;
+}
+
+.badge-text {
+  text-size:23px !important;
+}
