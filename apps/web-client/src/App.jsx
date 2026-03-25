@@ -11,7 +11,10 @@ import MoviesAndSeries from "./pages/MoviesAndSeries";
 import GenrePage from "./pages/GenrePage.jsx";
 import Support from "./pages/Support.jsx";
 import Subscriptions from "./pages/Subscriptions.jsx";
-import AuthPage from "./pages/AuthPage.jsx";
+import LoginPage from "./pages/LoginPage.jsx";
+import RegisterPage from "./pages/RegisterPage.jsx";
+import AccountPage from "./pages/AccountPage.jsx";
+import MoviePage from "./pages/MoviePage.jsx";
 
 const normalizePath = (p) => {
     if (!p) return "/";
@@ -89,6 +92,14 @@ const App = () => {
                 {!isHome && path.startsWith("/support") && <Support />}
 
                 {!isHome && path.startsWith("/subscriptions") && <Subscriptions />}
+                {!isHome && path.startsWith("/account") && <AccountPage/>}
+
+                {/* Страницы авторизации */}
+                {!isHome && path === "/auth/login" && <LoginPage navigate={navigate} />}
+
+                {!isHome && path === "/auth/register" && <RegisterPage navigate={navigate} />}
+
+                {!isHome && path.startsWith("/movie") && <MoviePage/>}
 
                 {!isHome && path.startsWith("/auth") && <AuthPage navigate={navigate} />}
             </div>

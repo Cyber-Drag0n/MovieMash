@@ -1,4 +1,5 @@
 /* src/pages/AuthPage.css */
+
 .auth-page {
     min-height: calc(100vh - 120px);
     display: flex;
@@ -11,7 +12,7 @@
 
 .auth-container {
     width: 720px;
-    max-width: calc(100% - 40px);
+    max-width: calc(100% - 8px);
     background: #0F0F0F;
     border: 4px solid #1F1F1F;
     border-radius: 12px;
@@ -19,56 +20,164 @@
     box-sizing: border-box;
 }
 
-.auth-header { font-size: 32px; color: #fff; text-align: center; margin: 0 0 18px; }
+.auth-header {
+    font-size: 32px;
+    color: #fff;
+    text-align: center;
+    margin: 0 0 18px;
+}
 
-.auth-tabs {
+.auth-form {
     display: flex;
-    gap: 8px;
-    justify-content: center;
-    margin-bottom: 16px;
+    flex-direction: column;
+    gap: 14px;
 }
-.tab {
-    background: transparent;
-    border: none;
-    color: #bfbfbf;
-    padding: 8px 14px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-.tab.active { background: #1A1A1A; color: #fff; }
 
-.auth-form { display: flex; flex-direction: column; gap: 12px; }
-.field { display: flex; flex-direction: column; gap: 8px; color: rgba(189,189,189,0.9); font-size: 13px; }
-.label-text { font-size: 13px; color: rgba(189,189,189,0.9); }
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.label-text {
+    font-size: 15px;
+    color: #fff;
+}
 
 .input {
+    width: 100%;
     padding: 12px;
     background: rgba(255,255,255,0.02);
     border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
     color: #fff;
     outline: none;
     font-size: 14px;
     box-sizing: border-box;
+    transition: 0.2s ease;
+    font-weight: 300;
 }
 
-.password-row { display:flex; gap:8px; align-items:center; }
-.eye-btn { background: transparent; border: none; width: 44px; height: 44px; border-radius: 8px; cursor: pointer; display:flex; align-items:center; justify-content:center; }
-.eye-btn img { width: 18px; height: 18px; object-fit: contain; }
+.input:focus {
+    border-color: #e81212;
+}
 
+/* ОБЕРТКА ДЛЯ ПАРОЛЯ */
+.input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.input-wrapper .input {
+    padding-right: 44px;
+}
+
+/* КНОПКА ГЛАЗА */
+.eye-btn {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.eye-btn img {
+    width: 20px;
+    height: 20px;
+    opacity: 0.7;
+    transition: 0.2s ease;
+}
+
+.eye-btn:hover img {
+    opacity: 1;
+}
+
+/* Забыли пароль */
+.forgot-password {
+    text-align: right;
+    font-size: 13px;
+    color: rgba(189,189,189,0.7);
+    cursor: pointer;
+}
+
+/* Кнопка */
 .auth-primary {
-    margin-top: 6px;
+    margin-top: 8px;
     background: linear-gradient(180deg,#e81212,#b20808);
     color: #fff;
     border: none;
     padding: 12px;
     border-radius: 8px;
-    font-weight: 700;
+    font-weight: 400;
+    font-size: 17px;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.auth-primary:hover {
+    transform: translateY(-2px);
+}
+
+/* Разделитель */
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+    color: rgba(189,189,189,0.6);
+    font-size: 14px;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+}
+
+/* Telegram */
+.social-login {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.social-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: #1A1A1A;
+    border: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
 }
-.auth-primary:hover { transform: translateY(-2px); }
 
-.auth-alt { text-align:center; margin-top:12px; color: rgba(189,189,189,0.9); }
-.link { border: none; background: transparent; color: #fff; text-decoration: underline; cursor: pointer; }
+.social-btn img {
+    width: 20px;
+    height: 20px;
+}
 
-.auth-error { color: #ff8b8b; font-size: 13px; }
+/* Нижний текст */
+.auth-alt {
+    text-align: center;
+    margin-top: 12px;
+    color: rgba(189,189,189,0.9);
+}
+
+.link {
+    border: none;
+    background: transparent;
+    color: #fff;
+    text-decoration: underline;
+    cursor: pointer;
+}
