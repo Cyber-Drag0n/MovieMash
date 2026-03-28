@@ -1,3 +1,4 @@
+// src/App.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import Header from "./Header";
 import "./App.css";
@@ -73,7 +74,7 @@ const App = () => {
                             </button>
                         </div>
 
-                        <CategoriesCarousel />
+                        <CategoriesCarousel navigate={navigate} />
                         <FAQ />
                         <Plans />
                         <AdBanner />
@@ -94,11 +95,13 @@ const App = () => {
 
                 {!isHome && path.startsWith("/account") && <AccountPage />}
 
-                {!isHome && path.startsWith("/auth/login") && <LoginPage navigate={navigate} />}
+                {!isHome && path === "/auth/login" && <LoginPage navigate={navigate} />}
 
-                {!isHome && path.startsWith("/auth/register") && <RegisterPage navigate={navigate} />}
+                {!isHome && path === "/auth/register" && <RegisterPage navigate={navigate} />}
 
-                {!isHome && path.startsWith("/movie") && <MoviePage navigate={navigate} />}
+                {!isHome && path.startsWith("/movie") && <MoviePage path={path} navigate={navigate} />}
+
+                {!isHome && path.startsWith("/auth") && <RegisterPage navigate={navigate} />}
             </div>
 
             <Footer />

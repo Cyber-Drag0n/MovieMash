@@ -93,6 +93,11 @@ export default function GenrePage({ path, navigate }) {
 
     const mediaLabel = params.mediaType === "movie" ? "Фильмы" : "Сериалы";
 
+    const openDetail = (item) => {
+        if (!item?.id) return;
+        navigate(`/movie/${params.mediaType}/${item.id}`);
+    };
+
     return (
         <section style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 12px 60px", color: "#fff" }}>
             {error && (
@@ -214,12 +219,14 @@ export default function GenrePage({ path, navigate }) {
                 {items.map(item => (
                     <article
                         key={item.id}
+                        onClick={() => openDetail(item)}
                         style={{
                             borderRadius: 16,
                             overflow: "hidden",
                             background: "#1b1b1b",
                             position: "relative",
-                            color: "#fff"
+                            color: "#fff",
+                            cursor: "pointer"
                         }}
                     >
                         <img
