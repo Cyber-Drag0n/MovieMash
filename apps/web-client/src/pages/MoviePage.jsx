@@ -53,7 +53,7 @@ function formatRuntime(minutes) {
 
 function buildVkVideoUrl(title) {
     const q = encodeURIComponent(String(title || "").trim());
-    return `https://vkvideo.ru/search?query=${q}`;
+    return `https://vkvideo.ru/?q=${q}`;
 }
 
 function pickPreferredRegion(regions) {
