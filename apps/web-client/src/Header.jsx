@@ -433,7 +433,7 @@ const Header = ({ navigate, currentPath }) => {
                             <input
                                 ref={inputRef}
                                 className="search-input"
-                                type="search"
+                                type="text"
                                 placeholder="Название фильма или сериала"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
@@ -441,6 +441,8 @@ const Header = ({ navigate, currentPath }) => {
                                 aria-autocomplete="list"
                                 aria-controls="search-results"
                                 aria-activedescendant={activeIndex >= 0 ? `result-${results[activeIndex]?.id}` : undefined}
+                                autoComplete="off"
+                                spellCheck="false"
                             />
 
                             <button

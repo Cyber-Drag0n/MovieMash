@@ -4,7 +4,7 @@ import "../MoviePage.css";
 import AdBanner from "../components/AdBanner.jsx";
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
-const IMAGE_POSTER = "https://image.tmdb.org/t/p/w500";
+const IMAGE_POSTER = "https://image.tmdb.org/t/p/original";
 const IMAGE_PROFILE = "https://image.tmdb.org/t/p/w185";
 const LANG = "ru-RU";
 const DEFAULT_REGION = "RU";
@@ -51,8 +51,8 @@ function formatRuntime(minutes) {
     return `${h}ч ${m.toString().padStart(2, "0")}мин`;
 }
 
-function buildVkVideoUrl(title) {
-    const q = encodeURIComponent(String(title || "").trim());
+function buildVkVideoUrl(query) {
+    const q = encodeURIComponent(String(query || "").trim());
     return `https://vkvideo.ru/?q=${q}`;
 }
 
@@ -68,6 +68,80 @@ function pickPreferredRegion(regions) {
     }
 
     return keys[0] || DEFAULT_REGION;
+}
+
+function formatSeasonTitle(season) {
+    if (!season) return "Сезон";
+    if (season.season_number === 0) return season.name || "Спецэпизоды";
+    return season.name || `Сезон ${season.season_number}`;
+}
+
+function formatEpisodeQuery(seriesTitle, seasonNumber, episodeNumber, episodeName) {
+    return `${seriesTitle} сезон ${seasonNumber} серия ${episodeNumber} ${episodeName || ""}`.trim();
+}
+
+function normalizeProviderName(name) {
+    return String(name || "")
+        .toLowerCase()
+        .replace(/[\s\u00A0]+/g, "")
+        .replace(/[^a-zа-я0-9+]+/gi, "");
+}
+
+function buildProviderUrl(providerName, title) {
+    const q = encodeURIComponent(String(title || "").trim());
+    const n = normalizeProviderName(providerName);
+
+    if (n.includes("primevideo") || n.includes("amazon")) {
+        return `https://www.primevideo.com/search/ref=atv_nb_sr?ie=UTF8&phrase=${q}`;
+    }
+
+    if (n.includes("disney")) {
+        return `https://www.disneyplus.com/browse/search?q=${q}`;
+    }
+
+    if (n.includes("netflix")) {
+        return `https://www.netflix.com/search?q=${q}`;
+    }
+
+    if (n.includes("appletv") || n.includes("apple")) {
+        return `https://tv.apple.com/search?term=${q}`;
+    }
+
+    if (n.includes("hulu")) {
+        return `https://www.hulu.com/search?q=${q}`;
+    }
+
+    if (n.includes("paramount")) {
+        return `https://www.paramountplus.com/search/?query=${q}`;
+    }
+
+    if (n.includes("peacock")) {
+        return `https://www.peacocktv.com/watch/search/${q}`;
+    }
+
+    if (n.includes("crunchyroll")) {
+        return `https://www.crunchyroll.com/search?from=&q=${q}`;
+    }
+
+    if (n.includes("mubi")) {
+        return `https://mubi.com/search?query=${q}`;
+    }
+
+    if (n.includes("plex")) {
+        return `https://watch.plex.tv/search?query=${q}`;
+    }
+
+    if (n.includes("youtube")) {
+        return `https://www.youtube.com/results?search_query=${q}`;
+    }
+
+    return `https://www.google.com/search?q=${encodeURIComponent(`${providerName} ${title}`.trim())}`;
+}
+
+function capitalizeFirstLetter(value) {
+    const text = String(value || "").trim();
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 export default function MoviePage({ path, navigate }) {
@@ -88,6 +162,10 @@ export default function MoviePage({ path, navigate }) {
     const [watchRegion, setWatchRegion] = useState(DEFAULT_REGION);
     const [providersExpanded, setProvidersExpanded] = useState(false);
 
+    const [seasonDetails, setSeasonDetails] = useState([]);
+    const [seasonsLoading, setSeasonsLoading] = useState(false);
+    const [expandedSeasons, setExpandedSeasons] = useState({});
+
     useEffect(() => {
         if (!params) return;
 
@@ -102,6 +180,8 @@ export default function MoviePage({ path, navigate }) {
         setLoading(true);
         setError(null);
         setProvidersExpanded(false);
+        setSeasonDetails([]);
+        setExpandedSeasons({});
 
         (async () => {
             try {
@@ -123,6 +203,36 @@ export default function MoviePage({ path, navigate }) {
                 setSimilar(Array.isArray(similarRes?.results) ? similarRes.results : []);
                 setWatchProviders(providersRes?.results || null);
                 setWatchRegion(pickPreferredRegion(providersRes?.results || null));
+
+                if (params.mediaType === "tv" && Array.isArray(details?.seasons)) {
+                    const validSeasons = details.seasons.filter((s) => s && s.season_number !== 0);
+
+                    if (validSeasons.length > 0) {
+                        setSeasonsLoading(true);
+                        const seasonsData = await Promise.all(
+                            validSeasons.map(async (season) => {
+                                try {
+                                    const seasonRes = await fetchJson(
+                                        `${TMDB_BASE}/tv/${params.id}/season/${season.season_number}?language=${LANG}`,
+                                        BEARER
+                                    );
+                                    return seasonRes;
+                                } catch {
+                                    return season;
+                                }
+                            })
+                        );
+
+                        if (!mounted) return;
+
+                        setSeasonDetails(seasonsData);
+                        setExpandedSeasons((prev) => ({
+                            ...prev,
+                            [seasonsData[0]?.season_number ?? 1]: true,
+                        }));
+                        setSeasonsLoading(false);
+                    }
+                }
             } catch (err) {
                 if (mounted) setError(String(err?.message || err));
             } finally {
@@ -156,32 +266,35 @@ export default function MoviePage({ path, navigate }) {
         return <div className="movie-page" style={{ color: "#fff", padding: 24 }}>Нет данных.</div>;
     }
 
+    const isSeries = params.mediaType === "tv";
+
     const title = data.title || data.name || "Без названия";
     const hero = getPoster(data.backdrop_path || data.poster_path);
     const year = (data.release_date || data.first_air_date || "").slice(0, 4) || "—";
     const description = data.overview || "Описание отсутствует";
     const runtime = data.runtime || data.episode_run_time?.[0] || 0;
-    const genres = Array.isArray(data.genres) ? data.genres.map(g => g.name) : [];
+    const genres = Array.isArray(data.genres) ? data.genres.map((g) => capitalizeFirstLetter(g.name)) : [];
     const languages = Array.isArray(data.spoken_languages)
-        ? data.spoken_languages.map(l => l.english_name || l.name).filter(Boolean)
+        ? data.spoken_languages.map((l) => l.english_name || l.name).filter(Boolean)
         : [];
 
     const director =
         params.mediaType === "movie"
-            ? credits?.crew?.find(p => p.job === "Director")
-            : data?.created_by?.[0] || credits?.crew?.find(p => p.job === "Director");
+            ? credits?.crew?.find((p) => p.job === "Director")
+            : data?.created_by?.[0] || credits?.crew?.find((p) => p.job === "Director");
 
     const music =
-        credits?.crew?.find(p =>
-            p.job === "Original Music Composer" ||
-            p.job === "Music" ||
-            p.department === "Music"
+        credits?.crew?.find(
+            (p) =>
+                p.job === "Original Music Composer" ||
+                p.job === "Music" ||
+                p.department === "Music"
         );
 
     const cast = Array.isArray(credits?.cast) ? credits.cast.slice(0, 6) : [];
     const trailer =
-        videos.find(v => v.site === "YouTube" && v.type === "Trailer") ||
-        videos.find(v => v.site === "YouTube") ||
+        videos.find((v) => v.site === "YouTube" && v.type === "Trailer") ||
+        videos.find((v) => v.site === "YouTube") ||
         null;
 
     const similarItems = similar.slice(0, 12);
@@ -200,12 +313,232 @@ export default function MoviePage({ path, navigate }) {
 
     const uniqueProviders = Array.from(
         new Map(providerGroups.map((p) => [p.provider_id, p])).values()
-    );
+    )
+        .sort((a, b) => (a.display_priority ?? 999) - (b.display_priority ?? 999));
 
     const visibleProviders = providersExpanded ? uniqueProviders : uniqueProviders.slice(0, 5);
-    const hiddenCount = uniqueProviders.length > 5 ? uniqueProviders.length - 5 : 0;
+    const hiddenProviders = uniqueProviders.slice(5);
+    const hiddenCount = hiddenProviders.length;
 
     const vkVideoUrl = buildVkVideoUrl(title);
+
+    const toggleSeason = (seasonNumber) => {
+        setExpandedSeasons((prev) => ({
+            ...prev,
+            [seasonNumber]: !prev[seasonNumber],
+        }));
+    };
+
+    const openProvider = (provider) => {
+        const url = buildProviderUrl(provider?.provider_name, title);
+        window.open(url, "_blank", "noopener,noreferrer");
+    };
+
+    const renderSeriesSeasons = () => {
+        if (!isSeries) return null;
+
+        const seasons = seasonDetails.length > 0 ? seasonDetails : data?.seasons || [];
+
+        return (
+            <div className="card" style={{ marginBottom: 24 }}>
+                <h3 className="section-title">Сезоны и серии:</h3>
+
+                {seasonsLoading && (
+                    <div className="body-text" style={{ marginBottom: 12 }}>
+                        Загружаем сезоны и серии...
+                    </div>
+                )}
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    {seasons
+                        .filter((season) => season && season.season_number !== 0)
+                        .map((season) => {
+                            const seasonNumber = season.season_number;
+                            const seasonInfo = seasonDetails.find((s) => s.season_number === seasonNumber) || season;
+                            const seasonEpisodes = Array.isArray(seasonInfo.episodes) ? seasonInfo.episodes : [];
+                            const isOpen = !!expandedSeasons[seasonNumber];
+
+                            return (
+                                <div
+                                    key={seasonNumber}
+                                    style={{
+                                        background: "#111",
+                                        borderRadius: 14,
+                                        border: "1px solid rgba(255,255,255,0.06)",
+                                        overflow: "hidden",
+                                    }}
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleSeason(seasonNumber)}
+                                        style={{
+                                            width: "100%",
+                                            background: "transparent",
+                                            color: "#fff",
+                                            border: "none",
+                                            padding: "18px 20px",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "space-between",
+                                            cursor: "pointer",
+                                            textAlign: "left",
+                                        }}
+                                    >
+                                        <div>
+                                            <div style={{ fontSize: 16, fontWeight: 700 }}>
+                                                {formatSeasonTitle(seasonInfo)}
+                                            </div>
+                                            <div style={{ fontSize: 13, opacity: 0.8 }}>
+                                                {seasonInfo.episode_count || seasonEpisodes.length || 0} серий
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            style={{
+                                                width: 34,
+                                                height: 34,
+                                                borderRadius: "50%",
+                                                border: "1px solid rgba(255,255,255,0.1)",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                fontSize: 16,
+                                            }}
+                                        >
+                                            {isOpen ? "↑" : "↓"}
+                                        </div>
+                                    </button>
+
+                                    {isOpen && (
+                                        <div style={{ padding: "0 20px 18px" }}>
+                                            {seasonInfo.overview && (
+                                                <p className="body-text" style={{ marginBottom: 18 }}>
+                                                    {seasonInfo.overview}
+                                                </p>
+                                            )}
+
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                                                {seasonEpisodes.length > 0 ? seasonEpisodes.map((episode) => {
+                                                    const episodeQuery = formatEpisodeQuery(
+                                                        title,
+                                                        seasonNumber,
+                                                        episode.episode_number,
+                                                        episode.name
+                                                    );
+                                                    const episodeUrl = buildVkVideoUrl(episodeQuery);
+                                                    const runtimeLabel = formatRuntime(episode.runtime || 0);
+
+                                                    return (
+                                                        <a
+                                                            key={episode.id || `${seasonNumber}-${episode.episode_number}`}
+                                                            href={episodeUrl}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            style={{
+                                                                display: "grid",
+                                                                gridTemplateColumns: "56px 130px 1fr auto",
+                                                                gap: 16,
+                                                                alignItems: "start",
+                                                                padding: "14px 16px",
+                                                                borderRadius: 12,
+                                                                background: "#161616",
+                                                                textDecoration: "none",
+                                                                color: "#fff",
+                                                                border: "1px solid rgba(255,255,255,0.05)",
+                                                            }}
+                                                        >
+                                                            <div
+                                                                style={{
+                                                                    fontSize: 20,
+                                                                    fontWeight: 700,
+                                                                    opacity: 0.7,
+                                                                    minWidth: 40,
+                                                                }}
+                                                            >
+                                                                {String(episode.episode_number).padStart(2, "0")}
+                                                            </div>
+
+                                                            <div
+                                                                style={{
+                                                                    width: 130,
+                                                                    height: 74,
+                                                                    borderRadius: 10,
+                                                                    overflow: "hidden",
+                                                                    background: "#0d0d0d",
+                                                                    position: "relative",
+                                                                }}
+                                                            >
+                                                                <img
+                                                                    src={episode.still_path ? `https://image.tmdb.org/t/p/w300${episode.still_path}` : "/example.jpg"}
+                                                                    alt={episode.name || ""}
+                                                                    style={{
+                                                                        width: "100%",
+                                                                        height: "100%",
+                                                                        objectFit: "cover",
+                                                                        display: "block",
+                                                                    }}
+                                                                    onError={(e) => {
+                                                                        e.currentTarget.src = "/example.jpg";
+                                                                    }}
+                                                                />
+                                                                <div
+                                                                    style={{
+                                                                        position: "absolute",
+                                                                        inset: 0,
+                                                                        background: "rgba(0,0,0,0.18)",
+                                                                        display: "flex",
+                                                                        alignItems: "center",
+                                                                        justifyContent: "center",
+                                                                        fontSize: 18,
+                                                                    }}
+                                                                >
+                                                                    ▶
+                                                                </div>
+                                                            </div>
+
+                                                            <div>
+                                                                <div style={{ fontWeight: 700, marginBottom: 8 }}>
+                                                                    {episode.name || `Серия ${episode.episode_number}`}
+                                                                </div>
+                                                                <div
+                                                                    className="body-text"
+                                                                    style={{
+                                                                        fontSize: 13,
+                                                                        lineHeight: 1.45,
+                                                                        opacity: 0.88,
+                                                                    }}
+                                                                >
+                                                                    {episode.overview || "Описание серии отсутствует."}
+                                                                </div>
+                                                            </div>
+
+                                                            <div
+                                                                style={{
+                                                                    whiteSpace: "nowrap",
+                                                                    padding: "6px 10px",
+                                                                    borderRadius: 999,
+                                                                    border: "1px solid rgba(255,255,255,0.1)",
+                                                                    fontSize: 12,
+                                                                    opacity: 0.9,
+                                                                }}
+                                                            >
+                                                                {runtimeLabel}
+                                                            </div>
+                                                        </a>
+                                                    );
+                                                }) : (
+                                                    <div className="body-text">Серии для этого сезона не найдены.</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="movie-page">
@@ -315,7 +648,7 @@ export default function MoviePage({ path, navigate }) {
 
                         <div className="carousel-controls" aria-hidden="true">
                             <button className="ctrl-arrow" type="button" aria-label="Предыдущая">
-                                <img src="/arrow_left.svg" alt="prev" className="ctrl-arrow-img" />
+                                <img src="/Arrow_left.svg" alt="prev" className="ctrl-arrow-img" />
                             </button>
 
                             <div className="prog-line">
@@ -323,10 +656,12 @@ export default function MoviePage({ path, navigate }) {
                             </div>
 
                             <button className="ctrl-arrow" type="button" aria-label="Следующая">
-                                <img src="/arrow_right.svg" alt="next" className="ctrl-arrow-img" />
+                                <img src="/Arrow_right.svg" alt="next" className="ctrl-arrow-img" />
                             </button>
                         </div>
                     </div>
+
+                    {renderSeriesSeasons()}
                 </div>
 
                 <aside className="movie-side">
@@ -335,7 +670,17 @@ export default function MoviePage({ path, navigate }) {
                             <div className="side-row">
                                 <img src="/calendar.svg" alt="calendar" className="icon-movie" />
                                 <strong className="side-label">Вышел:</strong>
-                                <div className="side-value">{year}</div>
+                                <div
+                                    className="side-value"
+                                    style={{
+                                        whiteSpace: "nowrap",
+                                        width: "fit-content",
+                                        minWidth: "max-content",
+                                        padding: "6px 14px",
+                                    }}
+                                >
+                                    {year}
+                                </div>
                             </div>
                         </div>
 
@@ -511,11 +856,11 @@ export default function MoviePage({ path, navigate }) {
                                         alignItems: "center"
                                     }}>
                                         {visibleProviders.map((provider) => (
-                                            <a
+                                            <button
                                                 key={provider.provider_id}
-                                                href={regionWatch.link || "#"}
-                                                target="_blank"
-                                                rel="noreferrer"
+                                                type="button"
+                                                onClick={() => openProvider(provider)}
+                                                title={provider.provider_name}
                                                 style={{
                                                     display: "inline-flex",
                                                     alignItems: "center",
@@ -524,10 +869,9 @@ export default function MoviePage({ path, navigate }) {
                                                     borderRadius: 12,
                                                     background: "#1f1f1f",
                                                     color: "#fff",
-                                                    textDecoration: "none",
-                                                    border: "1px solid rgba(255,255,255,0.08)"
+                                                    border: "1px solid rgba(255,255,255,0.08)",
+                                                    cursor: "pointer"
                                                 }}
-                                                title={provider.provider_name}
                                             >
                                                 {provider.logo_path ? (
                                                     <img
@@ -537,13 +881,13 @@ export default function MoviePage({ path, navigate }) {
                                                     />
                                                 ) : null}
                                                 <span>{provider.provider_name}</span>
-                                            </a>
+                                            </button>
                                         ))}
 
-                                        {uniqueProviders.length > 5 && (
+                                        {hiddenCount > 0 && (
                                             <button
                                                 type="button"
-                                                onClick={() => setProvidersExpanded(v => !v)}
+                                                onClick={() => setProvidersExpanded((v) => !v)}
                                                 style={{
                                                     cursor: "pointer",
                                                     display: "inline-flex",
@@ -561,19 +905,19 @@ export default function MoviePage({ path, navigate }) {
                                         )}
                                     </div>
 
-                                    {providersExpanded && uniqueProviders.length > 5 && (
+                                    {providersExpanded && hiddenProviders.length > 0 && (
                                         <div style={{
                                             marginTop: 12,
                                             display: "flex",
                                             flexWrap: "wrap",
                                             gap: 12
                                         }}>
-                                            {uniqueProviders.slice(5).map((provider) => (
-                                                <a
+                                            {hiddenProviders.map((provider) => (
+                                                <button
                                                     key={provider.provider_id}
-                                                    href={regionWatch.link || "#"}
-                                                    target="_blank"
-                                                    rel="noreferrer"
+                                                    type="button"
+                                                    onClick={() => openProvider(provider)}
+                                                    title={provider.provider_name}
                                                     style={{
                                                         display: "inline-flex",
                                                         alignItems: "center",
@@ -582,10 +926,9 @@ export default function MoviePage({ path, navigate }) {
                                                         borderRadius: 12,
                                                         background: "#1f1f1f",
                                                         color: "#fff",
-                                                        textDecoration: "none",
-                                                        border: "1px solid rgba(255,255,255,0.08)"
+                                                        border: "1px solid rgba(255,255,255,0.08)",
+                                                        cursor: "pointer"
                                                     }}
-                                                    title={provider.provider_name}
                                                 >
                                                     {provider.logo_path ? (
                                                         <img
@@ -595,7 +938,7 @@ export default function MoviePage({ path, navigate }) {
                                                         />
                                                     ) : null}
                                                     <span>{provider.provider_name}</span>
-                                                </a>
+                                                </button>
                                             ))}
                                         </div>
                                     )}

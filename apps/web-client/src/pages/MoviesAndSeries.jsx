@@ -46,6 +46,12 @@ function openMediaPath(navigate, item, fallbackType = "movie") {
     navigate(mediaPath(item, fallbackType));
 }
 
+function capitalizeFirstLetter(value) {
+    const text = String(value || "").trim();
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 /**
  * TMDB rating is 0..10, stars UI is 0..5.
  * We keep it simple and convert to a 5-star value.
@@ -372,10 +378,10 @@ export default function MoviesAndSeries({ navigate }) {
 
                         <div className="card-footer top-card-footer">
                             <span className="top-badge">Топ-10 в</span>
-                            <span className="cat-title">{genre.name}</span>
+                            <span className="cat-title">{capitalizeFirstLetter(genre.name)}</span>
                             <button
                                 className="cat-go"
-                                aria-label={`Открыть жанр ${genre.name}`}
+                                aria-label={`Открыть жанр ${capitalizeFirstLetter(genre.name)}`}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     openGenrePage("movie", genre);
@@ -433,10 +439,10 @@ export default function MoviesAndSeries({ navigate }) {
 
                         <div className="card-footer top-card-footer">
                             <span className="top-badge">Топ-10 в</span>
-                            <span className="cat-title">{genre.name}</span>
+                            <span className="cat-title">{capitalizeFirstLetter(genre.name)}</span>
                             <button
                                 className="cat-go"
-                                aria-label={`Открыть жанр ${genre.name}`}
+                                aria-label={`Открыть жанр ${capitalizeFirstLetter(genre.name)}`}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     openGenrePage("tv", genre);

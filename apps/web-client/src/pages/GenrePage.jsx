@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useState } from "react";
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const LANG = "ru-RU";
 const IMAGE_PREFIX = "https://image.tmdb.org/t/p/w300";
+const CARDS_PER_PAGE = 24;
+const TMDB_PAGE_SIZE = 20;
 
 function getBearerFromEnv() {
     try {
@@ -27,6 +29,44 @@ async function fetchJson(url, bearer) {
         throw new Error(`${res.status} ${res.statusText} ${txt}`);
     }
     return res.json();
+}
+
+function capitalizeFirstLetter(value) {
+    const text = String(value || "").trim();
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+async function fetchGenreBatch({ mediaType, genreId, uiPage, bearer }) {
+    const startIndex = (uiPage - 1) * CARDS_PER_PAGE;
+    const apiPageStart = Math.floor(startIndex / TMDB_PAGE_SIZE) + 1;
+    const offsetInFirstApiPage = startIndex % TMDB_PAGE_SIZE;
+
+    const urls = [
+        `${TMDB_BASE}/discover/${mediaType}?language=${LANG}&with_genres=${genreId}&sort_by=popularity.desc&page=${apiPageStart}`,
+        `${TMDB_BASE}/discover/${mediaType}?language=${LANG}&with_genres=${genreId}&sort_by=popularity.desc&page=${apiPageStart + 1}`,
+    ];
+
+    const [firstRes, secondRes] = await Promise.allSettled([
+        fetchJson(urls[0], bearer),
+        fetchJson(urls[1], bearer),
+    ]);
+
+    const firstData = firstRes.status === "fulfilled" ? firstRes.value : null;
+    const secondData = secondRes.status === "fulfilled" ? secondRes.value : null;
+
+    const totalResults = Number(firstData?.total_results || secondData?.total_results || 0);
+    const totalPages = Math.max(1, Math.ceil(totalResults / CARDS_PER_PAGE));
+
+    const combined = [
+        ...(Array.isArray(firstData?.results) ? firstData.results : []),
+        ...(Array.isArray(secondData?.results) ? secondData.results : []),
+    ];
+
+    return {
+        items: combined.slice(offsetInFirstApiPage, offsetInFirstApiPage + CARDS_PER_PAGE),
+        totalPages,
+    };
 }
 
 export default function GenrePage({ path, navigate }) {
@@ -60,19 +100,23 @@ export default function GenrePage({ path, navigate }) {
             try {
                 const genreList = await fetchJson(`${TMDB_BASE}/genre/${params.mediaType}/list?language=${LANG}`, BEARER);
                 const genres = Array.isArray(genreList?.genres) ? genreList.genres : [];
-                const found = genres.find(g => Number(g.id) === Number(params.genreId));
-                setGenreName(found?.name || "Жанр");
+                const found = genres.find((g) => Number(g.id) === Number(params.genreId));
 
-                const data = await fetchJson(
-                    `${TMDB_BASE}/discover/${params.mediaType}?language=${LANG}&with_genres=${params.genreId}&sort_by=popularity.desc&page=${page}`,
-                    BEARER
-                );
+                const displayName = capitalizeFirstLetter(found?.name || "Жанр");
+                if (!mounted) return;
+                setGenreName(displayName);
+
+                const { items: pageItems, totalPages: calcTotalPages } = await fetchGenreBatch({
+                    mediaType: params.mediaType,
+                    genreId: params.genreId,
+                    uiPage: page,
+                    bearer: BEARER,
+                });
 
                 if (!mounted) return;
 
-                const results = Array.isArray(data?.results) ? data.results : [];
-                setItems(results);
-                setTotalPages(Math.max(1, Number(data?.total_pages || 1)));
+                setItems(pageItems);
+                setTotalPages(calcTotalPages);
             } catch (err) {
                 if (mounted) setError(String(err?.message || err));
             } finally {
@@ -80,7 +124,9 @@ export default function GenrePage({ path, navigate }) {
             }
         })();
 
-        return () => { mounted = false; };
+        return () => {
+            mounted = false;
+        };
     }, [params?.mediaType, params?.genreId, page]);
 
     useEffect(() => {
@@ -92,6 +138,7 @@ export default function GenrePage({ path, navigate }) {
     }
 
     const mediaLabel = params.mediaType === "movie" ? "Фильмы" : "Сериалы";
+    const displayGenreName = capitalizeFirstLetter(genreName || "Жанр");
 
     const openDetail = (item) => {
         if (!item?.id) return;
@@ -101,22 +148,25 @@ export default function GenrePage({ path, navigate }) {
     return (
         <section style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 12px 60px", color: "#fff" }}>
             {error && (
-                <div style={{
-                    position: "fixed",
-                    top: 12,
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    background: "#b21f2d",
-                    color: "#fff",
-                    padding: "10px 16px",
-                    borderRadius: 8,
-                    zIndex: 9999,
-                    boxShadow: "0 6px 18px rgba(0,0,0,0.2)",
-                    maxWidth: "90%",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12
-                }} role="alert">
+                <div
+                    style={{
+                        position: "fixed",
+                        top: 12,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        background: "#b21f2d",
+                        color: "#fff",
+                        padding: "10px 16px",
+                        borderRadius: 8,
+                        zIndex: 9999,
+                        boxShadow: "0 6px 18px rgba(0,0,0,0.2)",
+                        maxWidth: "90%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                    }}
+                    role="alert"
+                >
                     <strong>TMDB:</strong>
                     <span style={{ whiteSpace: "pre-wrap", color: "#fff" }}>{String(error)}</span>
                     <button
@@ -126,7 +176,7 @@ export default function GenrePage({ path, navigate }) {
                             background: "transparent",
                             color: "#fff",
                             border: "none",
-                            cursor: "pointer"
+                            cursor: "pointer",
                         }}
                         aria-label="Закрыть"
                     >
@@ -136,51 +186,6 @@ export default function GenrePage({ path, navigate }) {
             )}
 
             <div style={{ marginBottom: 18 }}>
-                <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    flexWrap: "wrap",
-                    marginBottom: 14,
-                    fontSize: 14,
-                    opacity: 0.85,
-                    color: "#fff"
-                }}>
-                    <button
-                        onClick={() => navigate("/")}
-                        style={{
-                            border: "none",
-                            background: "transparent",
-                            color: "#fff",
-                            padding: 0,
-                            cursor: "pointer",
-                            fontSize: 14,
-                            opacity: 0.85
-                        }}
-                    >
-                        Главная
-                    </button>
-                    <span style={{ opacity: 0.6 }}>/</span>
-                    <button
-                        onClick={() => navigate("/media")}
-                        style={{
-                            border: "none",
-                            background: "transparent",
-                            color: "#fff",
-                            padding: 0,
-                            cursor: "pointer",
-                            fontSize: 14,
-                            opacity: 0.85
-                        }}
-                    >
-                        Фильмы и сериалы
-                    </button>
-                    <span style={{ opacity: 0.6 }}>/</span>
-                    <span style={{ opacity: 1, color: "#fff" }}>{mediaLabel}</span>
-                    <span style={{ opacity: 0.6 }}>/</span>
-                    <span style={{ opacity: 1, color: "#fff" }}>{genreName || "Жанр"}</span>
-                </div>
-
                 <button
                     onClick={() => navigate("/media")}
                     style={{
@@ -193,14 +198,14 @@ export default function GenrePage({ path, navigate }) {
                         marginBottom: 14,
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: 8
+                        gap: 8,
                     }}
                 >
                     ← Назад
                 </button>
 
                 <h1 style={{ margin: 0, fontSize: 32, color: "#fff" }}>
-                    {genreName || "Жанр"}
+                    {displayGenreName}
                 </h1>
                 <p style={{ margin: "8px 0 0", opacity: 0.8, color: "#fff" }}>
                     {mediaLabel} в этом жанре
@@ -213,10 +218,10 @@ export default function GenrePage({ path, navigate }) {
                 style={{
                     display: "grid",
                     gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
-                    gap: 18
+                    gap: 18,
                 }}
             >
-                {items.map(item => (
+                {items.map((item) => (
                     <article
                         key={item.id}
                         onClick={() => openDetail(item)}
@@ -226,7 +231,7 @@ export default function GenrePage({ path, navigate }) {
                             background: "#1b1b1b",
                             position: "relative",
                             color: "#fff",
-                            cursor: "pointer"
+                            cursor: "pointer",
                         }}
                     >
                         <img
@@ -236,9 +241,11 @@ export default function GenrePage({ path, navigate }) {
                                 width: "100%",
                                 aspectRatio: "2 / 3",
                                 objectFit: "cover",
-                                display: "block"
+                                display: "block",
                             }}
-                            onError={(ev) => { ev.currentTarget.src = "/example.jpg"; }}
+                            onError={(ev) => {
+                                ev.currentTarget.src = "/example.jpg";
+                            }}
                         />
                         <div style={{ padding: 12, color: "#fff" }}>
                             <div style={{ fontWeight: 700, marginBottom: 6, color: "#fff" }}>
@@ -261,17 +268,19 @@ export default function GenrePage({ path, navigate }) {
                 <div style={{ marginTop: 24, color: "#fff" }}>Нет данных по этому жанру.</div>
             )}
 
-            <div style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 12,
-                marginTop: 28,
-                flexWrap: "wrap",
-                color: "#fff"
-            }}>
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    gap: 12,
+                    marginTop: 28,
+                    flexWrap: "wrap",
+                    color: "#fff",
+                }}
+            >
                 <button
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page <= 1}
                     style={{
                         border: "none",
@@ -279,7 +288,7 @@ export default function GenrePage({ path, navigate }) {
                         color: "#fff",
                         padding: "10px 14px",
                         borderRadius: 10,
-                        cursor: page <= 1 ? "not-allowed" : "pointer"
+                        cursor: page <= 1 ? "not-allowed" : "pointer",
                     }}
                 >
                     ← Предыдущая
@@ -290,7 +299,7 @@ export default function GenrePage({ path, navigate }) {
                 </span>
 
                 <button
-                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
                     style={{
                         border: "none",
@@ -298,7 +307,7 @@ export default function GenrePage({ path, navigate }) {
                         color: "#fff",
                         padding: "10px 14px",
                         borderRadius: 10,
-                        cursor: page >= totalPages ? "not-allowed" : "pointer"
+                        cursor: page >= totalPages ? "not-allowed" : "pointer",
                     }}
                 >
                     Следующая →

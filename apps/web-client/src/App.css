@@ -1599,6 +1599,34 @@ main {
   font-weight: 400;
 }
 
-.badge-text {
-  text-size:23px !important;
+/* Делаем бейдж с датой шире и без обрезания текста */
+.new-card .release-badge,
+.category-card.new-card .release-badge {
+  max-width: none;
+  width: fit-content;
+  min-width: max-content;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  padding: 8px 14px;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+/* Текст внутри бейджа с датой */
+.new-card .release-badge-text,
+.category-card.new-card .release-badge-text {
+  white-space: nowrap;
+  display: inline-block;
+  line-height: 1;
+  font-size: 12px;
+}
+
+/* Если бейджи в новых карточках всё ещё слишком тесные, можно чуть расширить их отступы */
+.new-card .trend-badge.left.release-badge {
+  left: 12px;
+}
+
+.new-card .trend-badge.right.release-badge {
+  right: 12px;
 }
