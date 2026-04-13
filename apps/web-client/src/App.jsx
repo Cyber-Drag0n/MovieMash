@@ -43,6 +43,17 @@ const App = () => {
         return () => window.removeEventListener("popstate", onPop);
     }, []);
 
+    useEffect(() => {
+        const hash = window.location.hash;
+        if (hash) {
+            const id = hash.replace("#", "");
+            setTimeout(() => {
+                const el = document.getElementById(id);
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 50);
+        }
+    }, [path]);
+
     const isHome = path === "/";
 
     return (
@@ -74,9 +85,18 @@ const App = () => {
                             </button>
                         </div>
 
-                        <CategoriesCarousel navigate={navigate} />
-                        <FAQ />
-                        <Plans />
+                        <section id="categories">
+                            <CategoriesCarousel />
+                        </section>
+
+                        <section id="faq">
+                            <FAQ />
+                        </section>
+
+                        <section id="plans">
+                            <Plans />
+                        </section>
+
                         <AdBanner />
                     </>
                 )}
@@ -92,19 +112,17 @@ const App = () => {
                 {!isHome && path.startsWith("/support") && <Support />}
 
                 {!isHome && path.startsWith("/subscriptions") && <Subscriptions />}
-
                 {!isHome && path.startsWith("/account") && <AccountPage />}
 
                 {!isHome && path === "/auth/login" && <LoginPage navigate={navigate} />}
-
                 {!isHome && path === "/auth/register" && <RegisterPage navigate={navigate} />}
 
                 {!isHome && path.startsWith("/movie") && <MoviePage path={path} navigate={navigate} />}
 
-                {!isHome && path.startsWith("/auth") && <RegisterPage navigate={navigate} />}
+                {!isHome && path.startsWith("/auth") && <AuthPage navigate={navigate} />}
             </div>
 
-            <Footer />
+            <Footer navigate={navigate} currentPath={path} />
         </main>
     );
 };

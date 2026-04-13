@@ -30,6 +30,12 @@ async function fetchJson(url, bearer) {
     return res.json();
 }
 
+function capitalizeFirstLetter(value) {
+    const text = String(value || "").trim();
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 export default function CategoriesCarousel({ navigate }) {
     const [page, setPage] = useState(0);
     const [genres, setGenres] = useState([]);
@@ -39,8 +45,8 @@ export default function CategoriesCarousel({ navigate }) {
 
     const pages = Math.max(1, Math.ceil(genres.length / CARDS_PER_PAGE));
 
-    const onPrev = () => setPage(p => Math.max(0, p - 1));
-    const onNext = () => setPage(p => Math.min(pages - 1, p + 1));
+    const onPrev = () => setPage((p) => Math.max(0, p - 1));
+    const onNext = () => setPage((p) => Math.min(pages - 1, p + 1));
 
     useEffect(() => {
         const onKey = (e) => {
@@ -97,13 +103,13 @@ export default function CategoriesCarousel({ navigate }) {
 
                             return {
                                 id: genre.id,
-                                title: genre.name,
+                                title: capitalizeFirstLetter(genre.name),
                                 posters,
                             };
                         } catch {
                             return {
                                 id: genre.id,
-                                title: genre.name,
+                                title: capitalizeFirstLetter(genre.name),
                                 posters: [
                                     { id: `${genre.id}-1`, title: "", poster: "/example.jpg" },
                                     { id: `${genre.id}-2`, title: "", poster: "/example.jpg" },

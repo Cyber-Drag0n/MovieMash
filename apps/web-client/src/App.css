@@ -236,6 +236,19 @@
 .poster-3 { background: linear-gradient(135deg,#292929,#111111); }
 .poster-4 { background: linear-gradient(135deg,#222,#151515); }
 
+.footer-list button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.footer-list button:hover {
+  text-decoration: underline;
+}
 /* футер карточки: название + стрелка */
 .card-footer {
   display: flex;
@@ -1526,9 +1539,47 @@ main {
   font-weight: 400;
   color: #fff;
 }
-/* ===== keep right badge same size as left, but make stars smaller =====
-   Вставить в КОНЕЦ файла CSS
-*/
+.trend-card .trend-badge.left {
+  display: none;
+}
+
+.must-card .trend-badge.left {
+  display: none;
+}
+
+.must-card .trend-badge.right {
+  right: 12px;
+}
+
+.trend-card .trend-badge.right {
+  right: 12px;
+}
+
+.release-badge-center {
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%);
+  width: auto;
+  max-width: calc(100% - 24px);
+  justify-content: center;
+}
+
+.new-card .release-badge {
+  bottom: 12px;
+}
+
+.new-card .release-badge img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  display: block;
+}
+
+.release-badge-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Правый овал — совпадает по размерам/паддингу/типографике с общим .trend-badge (как левый) */
 .must-card .trend-badge.must-right {
@@ -1629,4 +1680,40 @@ main {
 
 .new-card .trend-badge.right.release-badge {
   right: 12px;
+}
+/* Центрируем бейдж "В трендах" */
+.trend-card .trend-badge.right {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  bottom: 12px;
+  max-width: calc(100% - 24px);
+  justify-content: center;
+  z-index: 12;
+}
+
+/* Центрируем бейдж со звездами в блоке "обязательно посмотреть" */
+.must-card .trend-badge.right {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  bottom: 12px;
+  max-width: calc(100% - 24px);
+  justify-content: center;
+  z-index: 12;
+}
+
+/* Чтобы текст и звезды были ровно по центру внутри бейджа */
+.must-card .trend-badge.right,
+.trend-card .trend-badge.right {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* Если оставлял левые бейджи скрытыми — оставь так */
+.trend-card .trend-badge.left,
+.must-card .trend-badge.left {
+  display: none;
 }

@@ -137,3 +137,92 @@
     .help-visual-wrap { max-width: 100%; margin-bottom: 14px; }
     .support-right { order: 2; }
 }
+
+.flag-picker {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.flag-btn {
+    height: 48px;
+    min-width: 64px;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #0F0F0F;
+    border: 1px solid #1F1F1F;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+}
+
+.flag-img {
+    width: 22px;
+    height: 22px;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+}
+
+.caret {
+    color: #fff;
+    font-size: 12px;
+    line-height: 1;
+    opacity: 0.9;
+}
+
+.flag-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    z-index: 20;
+    width: 260px;
+    max-height: 300px;
+    overflow-y: auto;
+    background: #0F0F0F;
+    border: 1px solid #1F1F1F;
+    border-radius: 12px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.6);
+    padding: 8px;
+}
+
+.flag-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    cursor: pointer;
+    text-align: left;
+}
+
+.flag-item:hover,
+.flag-item.active {
+    background: rgba(255,255,255,0.04);
+}
+
+.flag-text {
+    flex: 1;
+    font-size: 14px;
+}
+
+.flag-dial {
+    font-size: 13px;
+    color: rgba(189,189,189,0.85);
+}
+
+.phone-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.phone-row input {
+    flex: 1;
+}

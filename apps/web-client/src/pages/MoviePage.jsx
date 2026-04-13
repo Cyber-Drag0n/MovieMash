@@ -144,6 +144,34 @@ function capitalizeFirstLetter(value) {
     return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
+function getStarsParts(score, maxStars = 5, scale = 1) {
+    const normalized = Math.max(0, Math.min(maxStars, (Number(score) || 0) / scale));
+    const full = Math.floor(normalized);
+    const half = normalized - full >= 0.5;
+    const empty = maxStars - full - (half ? 1 : 0);
+    return { full, half, empty, normalized };
+}
+
+function StarOval({ score, numberText, compact = false, showNumber = true, ariaLabel }) {
+    const { full, half, empty, normalized } = getStarsParts(score, 5, 1);
+
+    return (
+        <span className={`star-oval ${compact ? "compact" : ""}`} aria-label={ariaLabel || `Рейтинг ${normalized.toFixed(1)} из 5`}>
+            <span className={`rating-row ${compact ? "compact" : ""}`}>
+                {Array.from({ length: full }).map((_, i) => (
+                    <img key={`f${i}`} src="/star-filled.svg" className="star-icon" alt="" />
+                ))}
+                {half && <img key="half" src="/star-half.svg" className="star-icon" alt="" />}
+                {Array.from({ length: empty }).map((_, i) => (
+                    <img key={`e${i}`} src="/star-empty.svg" className="star-icon" alt="" />
+                ))}
+            </span>
+
+            {showNumber && <span className="rating-number">{numberText}</span>}
+        </span>
+    );
+}
+
 export default function MoviePage({ path, navigate }) {
     const params = useMemo(() => {
         const m = path.match(/^\/movie\/(movie|tv)\/(\d+)/);
@@ -299,6 +327,9 @@ export default function MoviePage({ path, navigate }) {
 
     const similarItems = similar.slice(0, 12);
     const mainRating = Number(data.vote_average || 0).toFixed(1);
+
+    const tmdbRating = Math.max(0, Math.min(5, Number(data.vote_average || 0) / 2));
+    const tmdbRatingText = tmdbRating.toFixed(1);
 
     const regionWatch = watchProviders?.[watchRegion] || null;
 
@@ -497,15 +528,15 @@ export default function MoviePage({ path, navigate }) {
                                                             </div>
 
                                                             <div>
-                                                                <div style={{ fontWeight: 700, marginBottom: 8 }}>
+                                                                <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 15 }}>
                                                                     {episode.name || `Серия ${episode.episode_number}`}
                                                                 </div>
                                                                 <div
                                                                     className="body-text"
                                                                     style={{
-                                                                        fontSize: 13,
-                                                                        lineHeight: 1.45,
-                                                                        opacity: 0.88,
+                                                                        fontSize: 14,
+                                                                        lineHeight: 1.5,
+                                                                        opacity: 0.9,
                                                                     }}
                                                                 >
                                                                     {episode.overview || "Описание серии отсутствует."}
@@ -570,10 +601,6 @@ export default function MoviePage({ path, navigate }) {
                             <button className="btn-ghost" aria-label="Нравится" title="Нравится">
                                 <img src="/like.svg" alt="like" style={{ width: 18, height: 18 }} />
                             </button>
-
-                            <button className="btn-ghost" aria-label="Звук" title="Звук">
-                                <img src="/sound.svg" alt="sound" style={{ width: 18, height: 18 }} />
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -613,9 +640,6 @@ export default function MoviePage({ path, navigate }) {
                         <div className="reviews-grid">
                             {reviews.length > 0 ? reviews.slice(0, 4).map((r) => {
                                 const rating = 4.5;
-                                const full = Math.floor(rating);
-                                const half = rating - full >= 0.5;
-                                const empty = 5 - full - (half ? 1 : 0);
 
                                 return (
                                     <article key={r.id} className="review-card">
@@ -626,18 +650,13 @@ export default function MoviePage({ path, navigate }) {
                                         </div>
 
                                         <div className="review-right">
-                                            <span className="star-oval compact" aria-hidden="true">
-                                                <span className="rating-row compact">
-                                                    {Array.from({ length: full }).map((_, i) => (
-                                                        <img key={i} src="/star-filled.svg" className="star-icon" alt="" />
-                                                    ))}
-                                                    {half && <img src="/star-half.svg" className="star-icon" alt="" />}
-                                                    {Array.from({ length: empty }).map((_, i) => (
-                                                        <img key={"e" + i} src="/star-empty.svg" className="star-icon" alt="" />
-                                                    ))}
-                                                </span>
-                                                <span className="rating-number">{Math.round(rating)}</span>
-                                            </span>
+                                            <StarOval
+                                                score={rating}
+                                                numberText={rating.toFixed(1)}
+                                                compact
+                                                showNumber
+                                                ariaLabel={`Рейтинг ${rating} из 5`}
+                                            />
                                         </div>
                                     </article>
                                 );
@@ -705,33 +724,26 @@ export default function MoviePage({ path, navigate }) {
                             <div className="rating-row-block">
                                 <div className="rating-row-lbl muted-text">TMDB</div>
                                 <div className="rating-row-val">
-                                    <span className="star-oval small compact" aria-hidden="true">
-                                        <span className="rating-row compact">
-                                            {Array.from({ length: Math.floor(data.vote_average || 0) }).map((_, i) => (
-                                                <img key={i} src="/star-filled.svg" className="star-icon" alt="" />
-                                            ))}
-                                            {Array.from({ length: 5 - Math.floor(data.vote_average || 0) }).map((_, i) => (
-                                                <img key={"tm" + i} src="/star-empty.svg" className="star-icon" alt="" />
-                                            ))}
-                                        </span>
-                                        <span className="rating-number">{mainRating}</span>
-                                    </span>
+                                    <StarOval
+                                        score={tmdbRating}
+                                        numberText={tmdbRatingText}
+                                        compact
+                                        showNumber
+                                        ariaLabel={`Рейтинг TMDB ${tmdbRatingText} из 5`}
+                                    />
                                 </div>
                             </div>
 
                             <div className="rating-row-block">
                                 <div className="rating-row-lbl muted-text">MovieMash</div>
                                 <div className="rating-row-val">
-                                    <span className="star-oval small compact" aria-hidden="true">
-                                        <span className="rating-row compact">
-                                            <img src="/star-filled.svg" className="star-icon" alt="" />
-                                            <img src="/star-filled.svg" className="star-icon" alt="" />
-                                            <img src="/star-filled.svg" className="star-icon" alt="" />
-                                            <img src="/star-filled.svg" className="star-icon" alt="" />
-                                            <img src="/star-empty.svg" className="star-icon" alt="" />
-                                        </span>
-                                        <span className="rating-number">4</span>
-                                    </span>
+                                    <StarOval
+                                        score={4}
+                                        numberText="4.0"
+                                        compact
+                                        showNumber
+                                        ariaLabel="Рейтинг MovieMash 4 из 5"
+                                    />
                                 </div>
                             </div>
 

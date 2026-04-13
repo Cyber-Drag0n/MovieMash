@@ -123,6 +123,25 @@ export default function MoviesAndSeries({ navigate }) {
     }, [heroSlides.length]);
 
     useEffect(() => {
+        const scrollToHash = () => {
+            const hash = window.location.hash.replace("#", "");
+            if (!hash) return;
+
+            setTimeout(() => {
+                const el = document.getElementById(hash);
+                if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+            }, 150);
+        };
+
+        scrollToHash();
+        window.addEventListener("hashchange", scrollToHash);
+
+        return () => window.removeEventListener("hashchange", scrollToHash);
+    }, []);
+
+    useEffect(() => {
         const BEARER = getBearerFromEnv();
         if (!BEARER) {
             setError("TMDB token не найден. Положите VITE_TMDB_BEARER в .env.local");
@@ -169,7 +188,6 @@ export default function MoviesAndSeries({ navigate }) {
                         id: m?.id,
                         img: m?.poster_path ? `${IMAGE_PREFIX}${m.poster_path}` : "/example.jpg",
                         title: m?.title || m?.name || "",
-                        duration: "-",
                         views: `${m?.vote_count ?? 0}`,
                         tmdb: m,
                     }))
@@ -203,7 +221,6 @@ export default function MoviesAndSeries({ navigate }) {
                         popularArr.slice(0, 6).map((m) => ({
                             id: m?.id,
                             img: m?.poster_path ? `${IMAGE_PREFIX}${m.poster_path}` : "/example.jpg",
-                            duration: "-",
                             rating: Number(m?.vote_average || 0),
                             votes: `${m?.vote_count ?? 0}`,
                             tmdb: m,
@@ -245,8 +262,6 @@ export default function MoviesAndSeries({ navigate }) {
                         id: t?.id,
                         img: t?.poster_path ? `${IMAGE_PREFIX}${t.poster_path}` : "/example.jpg",
                         release: t?.first_air_date ? `Вышел ${t.first_air_date}` : "Дата неизвестна",
-                        duration: "-",
-                        seasons: t?.number_of_seasons ? `${t.number_of_seasons} сез.` : "",
                         tmdb: t,
                     }))
                 );
@@ -256,7 +271,6 @@ export default function MoviesAndSeries({ navigate }) {
                         id: t?.id,
                         img: t?.poster_path ? `${IMAGE_PREFIX}${t.poster_path}` : "/example.jpg",
                         title: t?.name || t?.title || "",
-                        duration: "-",
                         views: `${t?.vote_count ?? 0}`,
                         tmdb: t,
                     }))
@@ -269,7 +283,6 @@ export default function MoviesAndSeries({ navigate }) {
                         arr.slice(0, 6).map((t) => ({
                             id: t?.id,
                             img: t?.poster_path ? `${IMAGE_PREFIX}${t.poster_path}` : "/example.jpg",
-                            duration: "-",
                             rating: Number(t?.vote_average || 0),
                             votes: `${t?.vote_count ?? 0}`,
                             tmdb: t,
@@ -480,11 +493,6 @@ export default function MoviesAndSeries({ navigate }) {
                     />
                 </div>
 
-                <span className="trend-badge left must-left" aria-hidden="true">
-                    <img src="/Time.svg" alt="" />
-                    <span className="badge-text">{item.duration}</span>
-                </span>
-
                 <span className="trend-badge right must-right" aria-hidden="true">
                     <StarRow rating10={item.rating} />
                     <span className="badge-text votes-text">{item.votes}</span>
@@ -516,11 +524,6 @@ export default function MoviesAndSeries({ navigate }) {
                     />
                 </div>
 
-                <span className="trend-badge left must-left" aria-hidden="true">
-                    <img src="/Time.svg" alt="" />
-                    <span className="badge-text">{item.duration}</span>
-                </span>
-
                 <span className="trend-badge right must-right" aria-hidden="true">
                     <StarRow rating10={item.rating} />
                     <span className="badge-text votes-text">{item.votes}</span>
@@ -530,7 +533,11 @@ export default function MoviesAndSeries({ navigate }) {
     }
 
     const renderMustWatch = () => (
-        <div className="section-block" style={{ maxWidth: 1200, margin: "20px auto 60px", padding: "0 12px", position: "relative" }}>
+        <div
+            id="popular-movies"
+            className="section-block"
+            style={{ maxWidth: 1200, margin: "20px auto 60px", padding: "0 12px", position: "relative" }}
+        >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <h3 className="categories-title">Фильмы, которые обязательно нужно посмотреть</h3>
                 <CarouselControls page={0} pages={1} onPrev={() => {}} onNext={() => {}} />
@@ -546,7 +553,11 @@ export default function MoviesAndSeries({ navigate }) {
     );
 
     const renderMustWatchSeries = () => (
-        <div className="section-block" style={{ maxWidth: 1200, margin: "20px auto 60px", padding: "0 12px", position: "relative" }}>
+        <div
+            id="popular-series"
+            className="section-block"
+            style={{ maxWidth: 1200, margin: "20px auto 60px", padding: "0 12px", position: "relative" }}
+        >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <h3 className="categories-title">Сериалы, которые обязательно нужно посмотреть</h3>
                 <CarouselControls page={0} pages={1} onPrev={() => {}} onNext={() => {}} />
@@ -587,10 +598,6 @@ export default function MoviesAndSeries({ navigate }) {
                                     ev.currentTarget.src = "/example.jpg";
                                 }}
                             />
-                            <span className="trend-badge left">
-                                <img src="/Time.svg" alt="" />
-                                <span className="badge-text">{t.duration}</span>
-                            </span>
                             <span className="trend-badge right">
                                 <img src="/Eye.svg" alt="" />
                                 <span className="badge-text">{t.views}</span>
@@ -628,10 +635,6 @@ export default function MoviesAndSeries({ navigate }) {
                                     ev.currentTarget.src = "/example.jpg";
                                 }}
                             />
-                            <span className="trend-badge left">
-                                <img src="/Time.svg" alt="" />
-                                <span className="badge-text">{t.duration}</span>
-                            </span>
                             <span className="trend-badge right">
                                 <img src="/Eye.svg" alt="" />
                                 <span className="badge-text">{t.views}</span>
@@ -670,7 +673,7 @@ export default function MoviesAndSeries({ navigate }) {
                                 }}
                             />
                         </div>
-                        <span className="trend-badge left release-badge" style={{ position: "absolute", bottom: 12, left: 12 }}>
+                        <span className="trend-badge left release-badge release-badge-center">
                             <img src="/Time.svg" alt="" />
                             <span className="badge-text release-badge-text">{it.release}</span>
                         </span>
@@ -708,14 +711,9 @@ export default function MoviesAndSeries({ navigate }) {
                             />
                         </div>
 
-                        <span className="trend-badge left release-badge" style={{ position: "absolute", bottom: 12, left: 12 }}>
+                        <span className="trend-badge left release-badge release-badge-center">
                             <img src="/Time.svg" alt="" />
                             <span className="badge-text release-badge-text">{it.release}</span>
-                        </span>
-
-                        <span className="trend-badge right release-badge" style={{ position: "absolute", bottom: 12, right: 12 }}>
-                            <img src="/Seasons.svg" alt="" />
-                            <span className="badge-text release-badge-text">{it.seasons}</span>
                         </span>
                     </article>
                 ))}
@@ -812,7 +810,11 @@ export default function MoviesAndSeries({ navigate }) {
                 </div>
             </div>
 
-            <div className="section-block" style={{ maxWidth: 1200, margin: "20px auto 40px", padding: "0 12px", position: "relative" }}>
+            <div
+                id="genres-movies"
+                className="section-block"
+                style={{ maxWidth: 1200, margin: "20px auto 40px", padding: "0 12px", position: "relative" }}
+            >
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div><h3 className="categories-title">Популярный Топ-10 по жанрам</h3></div>
                     <CarouselControls page={topGenrePage} pages={topGenresPagesCount} onPrev={topPrev} onNext={topNext} />
@@ -824,7 +826,11 @@ export default function MoviesAndSeries({ navigate }) {
                 </div>
             </div>
 
-            <div className="section-block" style={{ maxWidth: 1200, margin: "10px auto 60px", padding: "0 12px", position: "relative" }}>
+            <div
+                id="trending-movies"
+                className="section-block"
+                style={{ maxWidth: 1200, margin: "10px auto 60px", padding: "0 12px", position: "relative" }}
+            >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                     <h3 className="categories-title">В трендах</h3>
                     <CarouselControls page={trendsPage} pages={trendsPagesCount} onPrev={trendsPrev} onNext={trendsNext} />
@@ -832,7 +838,11 @@ export default function MoviesAndSeries({ navigate }) {
                 <div style={{ overflow: "hidden" }}>{renderTrendsPage(trendsPage)}</div>
             </div>
 
-            <div className="section-block" style={{ maxWidth: 1200, margin: "10px auto 40px", padding: "0 12px", position: "relative" }}>
+            <div
+                id="new-movies"
+                className="section-block"
+                style={{ maxWidth: 1200, margin: "10px auto 40px", padding: "0 12px", position: "relative" }}
+            >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                     <h3 className="categories-title">Новинки фильмов</h3>
                     <CarouselControls page={newPage} pages={newPagesCount} onPrev={newPrev} onNext={newNext} />
@@ -842,7 +852,11 @@ export default function MoviesAndSeries({ navigate }) {
 
             {renderMustWatch()}
 
-            <div className="section-block" style={{ maxWidth: 1200, margin: "20px auto 40px", padding: "0 12px", position: "relative" }}>
+            <div
+                id="genres-series"
+                className="section-block"
+                style={{ maxWidth: 1200, margin: "20px auto 40px", padding: "0 12px", position: "relative" }}
+            >
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div><h3 className="categories-title">Популярный Топ-10 по жанрам</h3></div>
                     <CarouselControls page={topGenrePageSeries} pages={topGenresPagesCountSeries} onPrev={topPrevSeries} onNext={topNextSeries} />
@@ -852,7 +866,11 @@ export default function MoviesAndSeries({ navigate }) {
                 </div>
             </div>
 
-            <div className="section-block" style={{ maxWidth: 1200, margin: "10px auto 60px", padding: "0 12px", position: "relative" }}>
+            <div
+                id="trending-series"
+                className="section-block"
+                style={{ maxWidth: 1200, margin: "10px auto 60px", padding: "0 12px", position: "relative" }}
+            >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                     <h3 className="categories-title">В трендах</h3>
                     <CarouselControls page={trendsPageSeries} pages={trendsPagesCountSeries} onPrev={trendsPrevSeries} onNext={trendsNextSeries} />
@@ -860,7 +878,11 @@ export default function MoviesAndSeries({ navigate }) {
                 <div style={{ overflow: "hidden" }}>{renderTrendsPageSeries(trendsPageSeries)}</div>
             </div>
 
-            <div className="section-block" style={{ maxWidth: 1200, margin: "10px auto 40px", padding: "0 12px", position: "relative" }}>
+            <div
+                id="new-series"
+                className="section-block"
+                style={{ maxWidth: 1200, margin: "10px auto 40px", padding: "0 12px", position: "relative" }}
+            >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                     <h3 className="categories-title">Новинки сериалов</h3>
                     <CarouselControls page={newPageSeries} pages={newPagesCountSeries} onPrev={newPrevSeries} onNext={newNextSeries} />
