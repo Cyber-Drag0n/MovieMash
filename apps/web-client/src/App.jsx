@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import Header from "./Header";
 import "./App.css";
@@ -13,6 +12,7 @@ import Support from "./pages/Support.jsx";
 import Subscriptions from "./pages/Subscriptions.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
+import AuthPage from "./pages/AuthPage.jsx";
 import AccountPage from "./pages/AccountPage.jsx";
 import MoviePage from "./pages/MoviePage.jsx";
 
@@ -43,17 +43,6 @@ const App = () => {
         return () => window.removeEventListener("popstate", onPop);
     }, []);
 
-    useEffect(() => {
-        const hash = window.location.hash;
-        if (hash) {
-            const id = hash.replace("#", "");
-            setTimeout(() => {
-                const el = document.getElementById(id);
-                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-            }, 50);
-        }
-    }, [path]);
-
     const isHome = path === "/";
 
     return (
@@ -73,8 +62,7 @@ const App = () => {
                             <h1>Лучшее приложение для фильмов</h1>
                             <h2>
                                 MovieMash - это лучшее приложение для потокового просмотра ваших любимых фильмов и шоу по запросу, в любое
-                                время и в любом месте. С помощью MovieMash Вы можете наслаждаться широким спектром контента, включая новейшие
-                                блокбастеры, классические фильмы, популярные телешоу и многое другое.
+                                время и в любом месте.
                             </h2>
                         </div>
 
@@ -101,28 +89,18 @@ const App = () => {
                     </>
                 )}
 
-                {!isHome && path.startsWith("/media/genre/") && (
-                    <GenrePage path={path} navigate={navigate} />
-                )}
-
-                {!isHome && path.startsWith("/media") && !path.startsWith("/media/genre/") && (
-                    <MoviesAndSeries navigate={navigate} />
-                )}
-
+                {!isHome && path.startsWith("/media/genre/") && <GenrePage path={path} navigate={navigate} />}
+                {!isHome && path.startsWith("/media") && !path.startsWith("/media/genre/") && <MoviesAndSeries navigate={navigate} />}
                 {!isHome && path.startsWith("/support") && <Support />}
-
                 {!isHome && path.startsWith("/subscriptions") && <Subscriptions />}
-                {!isHome && path.startsWith("/account") && <AccountPage />}
-
+                {!isHome && path.startsWith("/account") && <AccountPage navigate={navigate} />}
                 {!isHome && path === "/auth/login" && <LoginPage navigate={navigate} />}
                 {!isHome && path === "/auth/register" && <RegisterPage navigate={navigate} />}
-
                 {!isHome && path.startsWith("/movie") && <MoviePage path={path} navigate={navigate} />}
-
                 {!isHome && path.startsWith("/auth") && <AuthPage navigate={navigate} />}
             </div>
 
-            <Footer navigate={navigate} currentPath={path} />
+            <Footer />
         </main>
     );
 };

@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "../MoviePage.css";
 import AdBanner from "../components/AdBanner.jsx";
+import { apiFetch, getJwt } from "../lib/api";
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const IMAGE_POSTER = "https://image.tmdb.org/t/p/original";
@@ -11,13 +12,10 @@ const DEFAULT_REGION = "RU";
 
 function getBearerFromEnv() {
     try {
-        if (typeof window !== "undefined" && import.meta.env && import.meta.env.VITE_TMDB_BEARER) {
-            return import.meta.env.VITE_TMDB_BEARER;
-        }
+        return import.meta.env.VITE_TMDB_BEARER || null;
     } catch {
-        // ignore
+        return null;
     }
-    return null;
 }
 
 async function fetchJson(url, bearer) {
@@ -45,9 +43,11 @@ function getProfile(path) {
 }
 
 function formatRuntime(minutes) {
-    if (!minutes && minutes !== 0) return "—";
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
+    if (minutes === null || minutes === undefined) return "—";
+    const value = Number(minutes);
+    if (Number.isNaN(value)) return "—";
+    const h = Math.floor(value / 60);
+    const m = value % 60;
     return `${h}ч ${m.toString().padStart(2, "0")}мин`;
 }
 
@@ -90,6 +90,10 @@ function normalizeProviderName(name) {
 function buildProviderUrl(providerName, title) {
     const q = encodeURIComponent(String(title || "").trim());
     const n = normalizeProviderName(providerName);
+
+    if (n.includes("vkvideo") || n.includes("vk")) {
+        return `https://vkvideo.ru/?q=${q}`;
+    }
 
     if (n.includes("primevideo") || n.includes("amazon")) {
         return `https://www.primevideo.com/search/ref=atv_nb_sr?ie=UTF8&phrase=${q}`;
@@ -156,7 +160,10 @@ function StarOval({ score, numberText, compact = false, showNumber = true, ariaL
     const { full, half, empty, normalized } = getStarsParts(score, 5, 1);
 
     return (
-        <span className={`star-oval ${compact ? "compact" : ""}`} aria-label={ariaLabel || `Рейтинг ${normalized.toFixed(1)} из 5`}>
+        <span
+            className={`star-oval ${compact ? "compact" : ""}`}
+            aria-label={ariaLabel || `Рейтинг ${normalized.toFixed(1)} из 5`}
+        >
             <span className={`rating-row ${compact ? "compact" : ""}`}>
                 {Array.from({ length: full }).map((_, i) => (
                     <img key={`f${i}`} src="/star-filled.svg" className="star-icon" alt="" />
@@ -194,6 +201,19 @@ export default function MoviePage({ path, navigate }) {
     const [seasonsLoading, setSeasonsLoading] = useState(false);
     const [expandedSeasons, setExpandedSeasons] = useState({});
 
+    const [libraryStatus, setLibraryStatus] = useState({
+        favorites: false,
+        watched: false,
+        watchlist: false,
+    });
+
+    const [reviewModalOpen, setReviewModalOpen] = useState(false);
+    const [reviewText, setReviewText] = useState("");
+    const [reviewSaving, setReviewSaving] = useState(false);
+    const [myReview, setMyReview] = useState(null);
+
+    const isAuthorized = !!getJwt();
+
     useEffect(() => {
         if (!params) return;
 
@@ -210,6 +230,8 @@ export default function MoviePage({ path, navigate }) {
         setProvidersExpanded(false);
         setSeasonDetails([]);
         setExpandedSeasons({});
+        setMyReview(null);
+        setReviewText("");
 
         (async () => {
             try {
@@ -240,11 +262,10 @@ export default function MoviePage({ path, navigate }) {
                         const seasonsData = await Promise.all(
                             validSeasons.map(async (season) => {
                                 try {
-                                    const seasonRes = await fetchJson(
+                                    return await fetchJson(
                                         `${TMDB_BASE}/tv/${params.id}/season/${season.season_number}?language=${LANG}`,
                                         BEARER
                                     );
-                                    return seasonRes;
                                 } catch {
                                     return season;
                                 }
@@ -258,13 +279,15 @@ export default function MoviePage({ path, navigate }) {
                             ...prev,
                             [seasonsData[0]?.season_number ?? 1]: true,
                         }));
-                        setSeasonsLoading(false);
                     }
                 }
             } catch (err) {
                 if (mounted) setError(String(err?.message || err));
             } finally {
-                if (mounted) setLoading(false);
+                if (mounted) {
+                    setLoading(false);
+                    setSeasonsLoading(false);
+                }
             }
         })();
 
@@ -272,6 +295,41 @@ export default function MoviePage({ path, navigate }) {
             mounted = false;
         };
     }, [params?.mediaType, params?.id]);
+
+    useEffect(() => {
+        if (!params || !data || !isAuthorized) return;
+
+        apiFetch("/api/library/mark-viewed", {
+            method: "POST",
+            body: JSON.stringify({
+                tmdb_id: params.id,
+                media_type: params.mediaType,
+            }),
+        }).catch(() => {});
+    }, [params?.id, params?.mediaType, data, isAuthorized]);
+
+    useEffect(() => {
+        if (!params || !data || !isAuthorized) return;
+
+        apiFetch(`/api/library/status?tmdb_id=${params.id}&media_type=${params.mediaType}`)
+            .then((status) => {
+                if (status) setLibraryStatus(status);
+            })
+            .catch(() => {});
+    }, [params?.id, params?.mediaType, data, isAuthorized]);
+
+    useEffect(() => {
+        if (!params || !data || !isAuthorized) return;
+
+        apiFetch(`/api/reviews/me?tmdb_id=${params.id}&media_type=${params.mediaType}`)
+            .then((res) => {
+                setMyReview(res?.item || null);
+                if (res?.item?.review_text) {
+                    setReviewText(res.item.review_text);
+                }
+            })
+            .catch(() => {});
+    }, [params?.id, params?.mediaType, data, isAuthorized]);
 
     if (!params) {
         return <div className="movie-page" style={{ color: "#fff", padding: 24 }}>Некорректный путь.</div>;
@@ -311,13 +369,12 @@ export default function MoviePage({ path, navigate }) {
             ? credits?.crew?.find((p) => p.job === "Director")
             : data?.created_by?.[0] || credits?.crew?.find((p) => p.job === "Director");
 
-    const music =
-        credits?.crew?.find(
-            (p) =>
-                p.job === "Original Music Composer" ||
-                p.job === "Music" ||
-                p.department === "Music"
-        );
+    const music = credits?.crew?.find(
+        (p) =>
+            p.job === "Original Music Composer" ||
+            p.job === "Music" ||
+            p.department === "Music"
+    );
 
     const cast = Array.isArray(credits?.cast) ? credits.cast.slice(0, 6) : [];
     const trailer =
@@ -326,8 +383,6 @@ export default function MoviePage({ path, navigate }) {
         null;
 
     const similarItems = similar.slice(0, 12);
-    const mainRating = Number(data.vote_average || 0).toFixed(1);
-
     const tmdbRating = Math.max(0, Math.min(5, Number(data.vote_average || 0) / 2));
     const tmdbRatingText = tmdbRating.toFixed(1);
 
@@ -344,8 +399,7 @@ export default function MoviePage({ path, navigate }) {
 
     const uniqueProviders = Array.from(
         new Map(providerGroups.map((p) => [p.provider_id, p])).values()
-    )
-        .sort((a, b) => (a.display_priority ?? 999) - (b.display_priority ?? 999));
+    ).sort((a, b) => (a.display_priority ?? 999) - (b.display_priority ?? 999));
 
     const visibleProviders = providersExpanded ? uniqueProviders : uniqueProviders.slice(0, 5);
     const hiddenProviders = uniqueProviders.slice(5);
@@ -363,6 +417,64 @@ export default function MoviePage({ path, navigate }) {
     const openProvider = (provider) => {
         const url = buildProviderUrl(provider?.provider_name, title);
         window.open(url, "_blank", "noopener,noreferrer");
+    };
+
+    const handleLibraryAction = async (kind) => {
+        if (!isAuthorized) {
+            navigate("/auth/login");
+            return;
+        }
+
+        try {
+            await apiFetch("/api/library/toggle", {
+                method: "POST",
+                body: JSON.stringify({
+                    tmdb_id: params.id,
+                    media_type: params.mediaType,
+                    kind,
+                }),
+            });
+
+            const status = await apiFetch(`/api/library/status?tmdb_id=${params.id}&media_type=${params.mediaType}`);
+            setLibraryStatus(status);
+        } catch (err) {
+            setError(String(err?.message || err));
+        }
+    };
+
+    const handleSubmitReview = async (e) => {
+        e.preventDefault();
+
+        if (!isAuthorized) {
+            navigate("/auth/login");
+            return;
+        }
+
+        if (!reviewText.trim()) return;
+
+        try {
+            setReviewSaving(true);
+
+            await apiFetch("/api/reviews", {
+                method: "POST",
+                body: JSON.stringify({
+                    tmdb_id: params.id,
+                    media_type: params.mediaType,
+                    review_text: reviewText.trim(),
+                }),
+            });
+
+            setMyReview({
+                review_text: reviewText.trim(),
+                review_status: "pending",
+            });
+
+            setReviewModalOpen(false);
+        } catch (err) {
+            setError(String(err?.message || err));
+        } finally {
+            setReviewSaving(false);
+        }
     };
 
     const renderSeriesSeasons = () => {
@@ -594,12 +706,31 @@ export default function MoviePage({ path, navigate }) {
                                 ▶ Смотреть
                             </button>
 
-                            <button className="btn-ghost" aria-label="Добавить в список" title="Добавить в список">
+                            <button
+                                className={`btn-ghost ${libraryStatus.watchlist ? "active" : ""}`}
+                                aria-label="Добавить в список"
+                                title="Добавить в список"
+                                onClick={() => handleLibraryAction("watchlist")}
+                            >
                                 <img src="/plus.svg" alt="plus" style={{ width: 18, height: 18 }} />
                             </button>
 
-                            <button className="btn-ghost" aria-label="Нравится" title="Нравится">
+                            <button
+                                className={`btn-ghost ${libraryStatus.favorites ? "active" : ""}`}
+                                aria-label="Нравится"
+                                title="Нравится"
+                                onClick={() => handleLibraryAction("favorites")}
+                            >
                                 <img src="/like.svg" alt="like" style={{ width: 18, height: 18 }} />
+                            </button>
+
+                            <button
+                                className={`btn-ghost ${libraryStatus.watched ? "active" : ""}`}
+                                aria-label="Просмотрено"
+                                title="Просмотрено"
+                                onClick={() => handleLibraryAction("watched")}
+                            >
+                                <img src="/sound.svg" alt="watched" style={{ width: 18, height: 18 }} />
                             </button>
                         </div>
                     </div>
@@ -632,17 +763,27 @@ export default function MoviePage({ path, navigate }) {
                     <div className="movie-reviews card">
                         <div className="reviews-header">
                             <h3 className="section-title">Отзывы:</h3>
-                            <button className="btn-add" type="button">
+                            <button
+                                className="btn-add"
+                                type="button"
+                                onClick={() => {
+                                    if (!isAuthorized) {
+                                        navigate("/auth/login");
+                                        return;
+                                    }
+                                    setReviewModalOpen(true);
+                                }}
+                            >
                                 + Добавить отзыв
                             </button>
                         </div>
 
                         <div className="reviews-grid">
-                            {reviews.length > 0 ? reviews.slice(0, 4).map((r) => {
-                                const rating = 4.5;
+                            {reviews.length > 0 ? reviews.slice(0, 4).map((r, index) => {
+                                const rating = Math.max(0, Math.min(5, Number(r.author_details?.rating || 4.5) / 2 || 4.5));
 
                                 return (
-                                    <article key={r.id} className="review-card">
+                                    <article key={r.id || index} className="review-card">
                                         <div className="review-left">
                                             <strong className="review-author">{r.author || "Пользователь"}</strong>
                                             <small className="review-origin muted-text">{r.author_details?.username || "TMDB"}</small>
@@ -664,6 +805,26 @@ export default function MoviePage({ path, navigate }) {
                                 <div className="body-text">Отзывы отсутствуют.</div>
                             )}
                         </div>
+
+                        {myReview && (
+                            <div style={{
+                                marginTop: 18,
+                                padding: 16,
+                                borderRadius: 16,
+                                background: "#111",
+                                border: "1px solid rgba(255,255,255,0.06)"
+                            }}>
+                                <div style={{ fontWeight: 700, marginBottom: 8, color: "#fff" }}>
+                                    Ваш отзыв
+                                </div>
+                                <div style={{ color: "#fff", opacity: 0.9, lineHeight: 1.6 }}>
+                                    {myReview.review_text}
+                                </div>
+                                <div style={{ marginTop: 8, fontSize: 13, opacity: 0.75, color: "#fff" }}>
+                                    Статус: {myReview.review_status === "pending" ? "на модерации" : myReview.review_status}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="carousel-controls" aria-hidden="true">
                             <button className="ctrl-arrow" type="button" aria-label="Предыдущая">
@@ -825,7 +986,7 @@ export default function MoviePage({ path, navigate }) {
                                 background: "#1f1f1f",
                                 color: "#fff",
                                 textDecoration: "none",
-                                border: "1px solid rgba(255,255,255,0.08)"
+                                border: "1px solid rgba(255,255,255,0.08)",
                             }}
                         >
                             Смотреть в VK Video
@@ -848,7 +1009,7 @@ export default function MoviePage({ path, navigate }) {
                                         border: "1px solid rgba(255,255,255,0.12)",
                                         borderRadius: 10,
                                         padding: "10px 12px",
-                                        outline: "none"
+                                        outline: "none",
                                     }}
                                 >
                                     {Object.keys(watchProviders).map((code) => (
@@ -861,12 +1022,14 @@ export default function MoviePage({ path, navigate }) {
 
                             {regionWatch && uniqueProviders.length > 0 ? (
                                 <>
-                                    <div style={{
-                                        display: "flex",
-                                        flexWrap: "wrap",
-                                        gap: 12,
-                                        alignItems: "center"
-                                    }}>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            flexWrap: "wrap",
+                                            gap: 12,
+                                            alignItems: "center",
+                                        }}
+                                    >
                                         {visibleProviders.map((provider) => (
                                             <button
                                                 key={provider.provider_id}
@@ -882,7 +1045,7 @@ export default function MoviePage({ path, navigate }) {
                                                     background: "#1f1f1f",
                                                     color: "#fff",
                                                     border: "1px solid rgba(255,255,255,0.08)",
-                                                    cursor: "pointer"
+                                                    cursor: "pointer",
                                                 }}
                                             >
                                                 {provider.logo_path ? (
@@ -909,7 +1072,7 @@ export default function MoviePage({ path, navigate }) {
                                                     borderRadius: 12,
                                                     background: providersExpanded ? "#2b2b2b" : "#1f1f1f",
                                                     color: "#fff",
-                                                    border: "1px solid rgba(255,255,255,0.08)"
+                                                    border: "1px solid rgba(255,255,255,0.08)",
                                                 }}
                                             >
                                                 {providersExpanded ? "Свернуть" : `Показать ещё ${hiddenCount}`}
@@ -918,12 +1081,14 @@ export default function MoviePage({ path, navigate }) {
                                     </div>
 
                                     {providersExpanded && hiddenProviders.length > 0 && (
-                                        <div style={{
-                                            marginTop: 12,
-                                            display: "flex",
-                                            flexWrap: "wrap",
-                                            gap: 12
-                                        }}>
+                                        <div
+                                            style={{
+                                                marginTop: 12,
+                                                display: "flex",
+                                                flexWrap: "wrap",
+                                                gap: 12,
+                                            }}
+                                        >
                                             {hiddenProviders.map((provider) => (
                                                 <button
                                                     key={provider.provider_id}
@@ -939,7 +1104,7 @@ export default function MoviePage({ path, navigate }) {
                                                         background: "#1f1f1f",
                                                         color: "#fff",
                                                         border: "1px solid rgba(255,255,255,0.08)",
-                                                        cursor: "pointer"
+                                                        cursor: "pointer",
                                                     }}
                                                 >
                                                     {provider.logo_path ? (
@@ -996,6 +1161,107 @@ export default function MoviePage({ path, navigate }) {
                                 </div>
                             </article>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {reviewModalOpen && (
+                <div
+                    style={{
+                        position: "fixed",
+                        inset: 0,
+                        background: "rgba(0,0,0,0.72)",
+                        zIndex: 9999,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 16,
+                    }}
+                    onClick={() => setReviewModalOpen(false)}
+                >
+                    <div
+                        style={{
+                            width: "100%",
+                            maxWidth: 640,
+                            background: "#141414",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                            borderRadius: 20,
+                            padding: 20,
+                            color: "#fff",
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
+                            <h3 className="section-title" style={{ margin: 0 }}>Добавить отзыв</h3>
+                            <button
+                                type="button"
+                                onClick={() => setReviewModalOpen(false)}
+                                style={{
+                                    border: "none",
+                                    background: "transparent",
+                                    color: "#fff",
+                                    fontSize: 22,
+                                    cursor: "pointer",
+                                    lineHeight: 1,
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmitReview}>
+                            <textarea
+                                value={reviewText}
+                                onChange={(e) => setReviewText(e.target.value)}
+                                placeholder="Напишите ваш отзыв..."
+                                rows={8}
+                                style={{
+                                    width: "100%",
+                                    resize: "vertical",
+                                    background: "#1f1f1f",
+                                    color: "#fff",
+                                    border: "1px solid rgba(255,255,255,0.10)",
+                                    borderRadius: 14,
+                                    padding: 14,
+                                    outline: "none",
+                                    fontSize: 15,
+                                    lineHeight: 1.6,
+                                }}
+                            />
+
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 16 }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setReviewModalOpen(false)}
+                                    style={{
+                                        padding: "10px 14px",
+                                        borderRadius: 12,
+                                        border: "1px solid rgba(255,255,255,0.08)",
+                                        background: "#1f1f1f",
+                                        color: "#fff",
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    Отмена
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    disabled={reviewSaving || !reviewText.trim()}
+                                    style={{
+                                        padding: "10px 14px",
+                                        borderRadius: 12,
+                                        border: "none",
+                                        background: reviewSaving ? "#666" : "#ffffff",
+                                        color: "#111",
+                                        fontWeight: 700,
+                                        cursor: reviewSaving ? "not-allowed" : "pointer",
+                                    }}
+                                >
+                                    {reviewSaving ? "Отправка..." : "Отправить"}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

@@ -1,23 +1,51 @@
 import React, { useState } from "react";
 import "../AuthPage.css";
+import { apiFetch, setJwt } from "../lib/api";
 
 export default function LoginPage({ navigate }) {
     const [showPassword, setShowPassword] = useState(false);
+    const [login, setLogin] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const onSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError("");
+
+        try {
+            const res = await apiFetch("/api/auth/login", {
+                method: "POST",
+                body: JSON.stringify({ login, password }),
+            });
+
+            setJwt(res.token);
+            localStorage.setItem("movie_mash_user", JSON.stringify(res.user));
+            navigate("/account");
+        } catch (err) {
+            setError(err.message || "Ошибка входа");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <main className="auth-page">
             <div className="auth-container">
-
                 <h1 className="auth-header">Вход</h1>
 
-                <form className="auth-form">
-
+                <form className="auth-form" onSubmit={onSubmit}>
                     <label className="field">
-                        <div className="label-text">Email</div>
+                        <div className="label-text">Email или логин</div>
                         <input
-                            type="email"
+                            type="text"
                             className="input"
-                            placeholder="Введите Ваш Email"
+                            placeholder="Введите Ваш Email или логин"
+                            value={login}
+                            onChange={(e) => setLogin(e.target.value)}
+                            autoComplete="username"
+                            required
                         />
                     </label>
 
@@ -29,6 +57,10 @@ export default function LoginPage({ navigate }) {
                                 type={showPassword ? "text" : "password"}
                                 className="input"
                                 placeholder="Введите Ваш пароль"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                autoComplete="current-password"
+                                required
                             />
                             <button
                                 type="button"
@@ -39,24 +71,14 @@ export default function LoginPage({ navigate }) {
                             </button>
                         </div>
 
-                        <div className="forgot-password">
-                            Забыли пароль?
-                        </div>
+                        <div className="forgot-password">Забыли пароль?</div>
                     </label>
 
-                    <button className="auth-primary">
-                        Войти
+                    {error && <div className="auth-error" role="alert">{error}</div>}
+
+                    <button className="auth-primary" disabled={loading}>
+                        {loading ? "Вход..." : "Войти"}
                     </button>
-
-                    <div className="divider">
-                        <span>Или войдите с помощью</span>
-                    </div>
-
-                    <div className="social-login">
-                        <button type="button" className="social-btn">
-                            <img src="/telegram.svg" alt="" />
-                        </button>
-                    </div>
 
                     <div className="auth-alt">
                         Нет учётной записи?{" "}
@@ -68,7 +90,6 @@ export default function LoginPage({ navigate }) {
                             Зарегистрироваться
                         </button>
                     </div>
-
                 </form>
             </div>
         </main>
