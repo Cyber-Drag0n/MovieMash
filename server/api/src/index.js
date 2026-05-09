@@ -177,6 +177,23 @@ async function getListId(userId, listType) {
     return rows[0]?.id || null;
 }
 
+async function upsertUserRating(userId, tmdbId, mediaType, rating) {
+    const safeRating = Math.max(1, Math.min(5, Number(rating || 0)));
+
+    if (!safeRating) {
+        return null;
+    }
+
+    await query(
+        `INSERT INTO user_ratings (user_id, tmdb_id, media_type, rating, rated_at)
+         VALUES (?, ?, ?, ?, NOW())
+         ON DUPLICATE KEY UPDATE rating = VALUES(rating), rated_at = NOW()`,
+        [userId, tmdbId, mediaType, safeRating]
+    );
+
+    return safeRating;
+}
+
 app.get("/api/health", (req, res) => {
     res.json({ ok: true });
 });
@@ -361,10 +378,15 @@ app.get("/api/account/overview", authMiddleware, async (req, res) => {
 app.get("/api/account/reviews", authMiddleware, async (req, res) => {
     try {
         const rows = await query(
-            `SELECT id, tmdb_id, media_type, review_text, review_status, created_at, updated_at
-             FROM user_reviews
-             WHERE user_id = ?
-             ORDER BY created_at DESC
+            `SELECT r.id, r.tmdb_id, r.media_type, r.review_text, r.review_status, r.created_at, r.updated_at,
+                    COALESCE(ur.rating, 0) AS rating
+             FROM user_reviews r
+                      LEFT JOIN user_ratings ur
+                                ON ur.user_id = r.user_id
+                                    AND ur.tmdb_id = r.tmdb_id
+                                    AND ur.media_type = r.media_type
+             WHERE r.user_id = ?
+             ORDER BY r.created_at DESC
                  LIMIT 50`,
             [req.user.id]
         );
@@ -733,10 +755,15 @@ app.get("/api/reviews/me", authMiddleware, async (req, res) => {
         }
 
         const rows = await query(
-            `SELECT id, tmdb_id, media_type, review_text, review_status, created_at, updated_at
-             FROM user_reviews
-             WHERE user_id = ? AND tmdb_id = ? AND media_type = ?
-             LIMIT 1`,
+            `SELECT r.id, r.tmdb_id, r.media_type, r.review_text, r.review_status, r.created_at, r.updated_at,
+                    COALESCE(ur.rating, 0) AS rating
+             FROM user_reviews r
+                      LEFT JOIN user_ratings ur
+                                ON ur.user_id = r.user_id
+                                    AND ur.tmdb_id = r.tmdb_id
+                                    AND ur.media_type = r.media_type
+             WHERE r.user_id = ? AND r.tmdb_id = ? AND r.media_type = ?
+                 LIMIT 1`,
             [req.user.id, tmdbId, mediaType]
         );
 
@@ -748,10 +775,11 @@ app.get("/api/reviews/me", authMiddleware, async (req, res) => {
 
 app.post("/api/reviews", authMiddleware, async (req, res) => {
     try {
-        const { tmdb_id, media_type, review_text } = req.body || {};
+        const { tmdb_id, media_type, review_text, rating } = req.body || {};
 
         const tmdbId = Number(tmdb_id);
         const text = String(review_text || "").trim();
+        const safeRating = Math.max(1, Math.min(5, Number(rating || 0)));
 
         if (!tmdbId || !media_type || !text) {
             return res.status(400).json({ message: "tmdb_id, media_type и review_text обязательны" });
@@ -775,8 +803,12 @@ app.post("/api/reviews", authMiddleware, async (req, res) => {
                                       moderation_notes = NULL,
                                       moderated_at = NULL,
                                       updated_at = CURRENT_TIMESTAMP`,
-            [req.user.id, tmdbId, media_type, text]
+            [req.user.id, tmdbId, mediaType, text]
         );
+
+        if (safeRating) {
+            await upsertUserRating(req.user.id, tmdbId, mediaType, safeRating);
+        }
 
         await createNotification(
             req.user.id,
@@ -787,6 +819,25 @@ app.post("/api/reviews", authMiddleware, async (req, res) => {
         );
 
         res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+
+app.post("/api/library/rate", authMiddleware, async (req, res) => {
+    try {
+        const { tmdb_id, media_type, rating } = req.body || {};
+        const tmdbId = Number(tmdb_id);
+        const safeRating = Math.max(1, Math.min(5, Number(rating || 0)));
+
+        if (!tmdbId || !media_type || !safeRating) {
+            return res.status(400).json({ message: "tmdb_id, media_type и rating обязательны" });
+        }
+
+        await upsertUserRating(req.user.id, tmdbId, mediaType, safeRating);
+
+        res.json({ ok: true, rating: safeRating });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

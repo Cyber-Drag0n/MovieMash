@@ -37,6 +37,28 @@ async function tmdbFetch(path) {
     return res.json();
 }
 
+function renderStars(rating) {
+    const value = Math.max(0, Math.min(5, Number(rating || 0)));
+    const fullStars = Math.floor(value);
+    const hasHalf = value - fullStars >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
+
+    return (
+        <span className="star-oval" aria-label={`Рейтинг ${value.toFixed(1)} из 5`}>
+            <span className="rating-row" aria-hidden="true">
+                {Array.from({ length: fullStars }).map((_, i) => (
+                    <img key={`full-${i}`} src="/star-filled.svg" alt="" className="star-icon" />
+                ))}
+                {hasHalf && <img key="half" src="/star-half.svg" alt="" className="star-icon" />}
+                {Array.from({ length: emptyStars }).map((_, i) => (
+                    <img key={`empty-${i}`} src="/star-empty.svg" alt="" className="star-icon" />
+                ))}
+            </span>
+            <span className="rating-number">{value > 0 ? value.toFixed(1) : "—"}</span>
+        </span>
+    );
+}
+
 export default function AccountPage({ navigate }) {
     const [activeTab, setActiveTab] = useState("profile");
     const [isEditing, setIsEditing] = useState(false);
@@ -62,7 +84,6 @@ export default function AccountPage({ navigate }) {
         unread_notifications_count: 0,
     });
 
-    const [notifications, setNotifications] = useState([]);
     const [supportMessages, setSupportMessages] = useState([]);
     const [comments, setComments] = useState([]);
 
@@ -79,11 +100,10 @@ export default function AccountPage({ navigate }) {
         setAuthorized(true);
 
         try {
-            const [overviewRes, supportRes, reviewsRes, notificationsRes] = await Promise.all([
+            const [overviewRes, supportRes, reviewsRes] = await Promise.all([
                 apiFetch("/api/account/overview"),
                 apiFetch("/api/account/support-messages").catch(() => ({ items: [] })),
                 apiFetch("/api/account/reviews").catch(() => ({ items: [] })),
-                apiFetch("/api/notifications").catch(() => ({ items: [] })),
             ]);
 
             const u = overviewRes?.user || {};
@@ -103,27 +123,27 @@ export default function AccountPage({ navigate }) {
                 unread_notifications_count: overviewRes?.stats?.unread_notifications_count ?? 0,
             });
 
-            setNotifications(Array.isArray(notificationsRes?.items) ? notificationsRes.items : []);
             setSupportMessages(Array.isArray(supportRes?.items) ? supportRes.items : []);
 
             const rawReviews = Array.isArray(reviewsRes?.items) ? reviewsRes.items : [];
-            const enriched = await Promise.all(rawReviews.map(async (item) => {
-                const details = await tmdbFetch(`/${item.media_type}/${item.tmdb_id}?language=${LANG}`);
-                const title = details?.title || details?.name || `TMDB #${item.tmdb_id}`;
-                const ratingValue = Number(details?.vote_average || 0);
-                const rating = ratingValue > 0 ? Math.max(1, Math.min(5, Math.round(ratingValue / 2))) : 0;
+            const enriched = await Promise.all(
+                rawReviews.map(async (item) => {
+                    const details = await tmdbFetch(`/${item.media_type}/${item.tmdb_id}?language=${LANG}`);
+                    const title = details?.title || details?.name || `TMDB #${item.tmdb_id}`;
+                    const rating = Math.max(0, Math.min(5, Number(item.rating || 0)));
 
-                return {
-                    id: item.id,
-                    tmdb_id: item.tmdb_id,
-                    media_type: item.media_type,
-                    title: `${item.media_type === "movie" ? "Фильм" : "Сериал"} "${title}"`,
-                    country: "из TMDB",
-                    text: item.review_text || "",
-                    rating,
-                    created_at: item.created_at,
-                };
-            }));
+                    return {
+                        id: item.id,
+                        tmdb_id: item.tmdb_id,
+                        media_type: item.media_type,
+                        title: `${item.media_type === "movie" ? "Фильм" : "Сериал"} "${title}"`,
+                        country: "из TMDB",
+                        text: item.review_text || "",
+                        rating,
+                        created_at: item.created_at,
+                    };
+                })
+            );
 
             setComments(enriched);
         } catch (err) {
@@ -170,25 +190,6 @@ export default function AccountPage({ navigate }) {
         }
     };
 
-    const markAllNotificationsRead = async () => {
-        try {
-            await apiFetch("/api/notifications/read-all", { method: "PATCH" });
-            await loadAccount();
-            setSuccess("Все уведомления отмечены как прочитанные");
-        } catch (err) {
-            setError(err.message || "Ошибка обновления уведомлений");
-        }
-    };
-
-    const markNotificationRead = async (id) => {
-        try {
-            await apiFetch(`/api/notifications/${id}/read`, { method: "PATCH" });
-            await loadAccount();
-        } catch (err) {
-            setError(err.message || "Ошибка обновления уведомления");
-        }
-    };
-
     const logout = async () => {
         try {
             await apiFetch("/api/auth/logout", { method: "POST" });
@@ -197,7 +198,7 @@ export default function AccountPage({ navigate }) {
         }
         clearJwt();
         setAuthorized(false);
-        navigate("/auth/login");
+        navigate("/login");
     };
 
     const openTmdbItem = (item) => {
@@ -237,7 +238,7 @@ export default function AccountPage({ navigate }) {
                                         className={`tab-btn ${activeTab === tab.key ? "active" : ""}`}
                                         onClick={() => {
                                             if (tab.key === "profile") setActiveTab("profile");
-                                            else navigate("/auth/login");
+                                            else navigate("/login");
                                         }}
                                     >
                                         {tab.label}
@@ -258,12 +259,12 @@ export default function AccountPage({ navigate }) {
                                         <small className="comment-sub">гость</small>
                                     </div>
                                     <p className="comment-text">
-                                        После входа будут доступны лайки, просмотренное, уведомления, сообщения поддержки и редактирование профиля.
+                                        После входа будут доступны лайки, просмотренное, сообщения поддержки и редактирование профиля.
                                     </p>
                                 </div>
 
                                 <div className="comment-right">
-                                    <button className="comment-go" aria-label="Войти" onClick={() => navigate("/auth/login")}>
+                                    <button className="comment-go" aria-label="Войти" onClick={() => navigate("/login")}>
                                         <img src="/Arrow_right.svg" alt="" />
                                     </button>
                                 </div>
@@ -272,10 +273,10 @@ export default function AccountPage({ navigate }) {
 
                         <div className="comments-ad">
                             <div style={{ display: "grid", gap: 12, marginBottom: 18 }}>
-                                <button className="submit-btn" type="button" onClick={() => navigate("/auth/login")}>
+                                <button className="submit-btn" type="button" onClick={() => navigate("/login")}>
                                     Войти
                                 </button>
-                                <button className="submit-btn" type="button" onClick={() => navigate("/auth/register")}>
+                                <button className="submit-btn" type="button" onClick={() => navigate("/register")}>
                                     Зарегистрироваться
                                 </button>
                             </div>
@@ -310,6 +311,11 @@ export default function AccountPage({ navigate }) {
                             </button>
                         </div>
 
+                        <p className="watched-count">
+                            <span className="count">{watchedCount}</span>
+                            <span className="label">Фильмы и сериалы</span>
+                        </p>
+
                         <nav className="account-tabs" role="tablist" aria-label="Разделы аккаунта">
                             {TABS.map((tab) => (
                                 <button
@@ -338,53 +344,6 @@ export default function AccountPage({ navigate }) {
                     <>
                         <AccountCarousel title="Оценки и просмотры" variant="ratings" />
                         <AccountCarousel title="Буду смотреть" variant="watchlist" />
-
-                        <div className="comments-wrap" style={{ marginTop: 18 }}>
-                            <div className="comments-list" aria-live="polite">
-                                <article className="comment-card">
-                                    <div className="comment-left">
-                                        <div className="comment-meta">
-                                            <strong className="comment-title">Уведомления</strong>
-                                            <small className="comment-sub">
-                                                {stats.unread_notifications_count > 0 ? `Непрочитанных: ${stats.unread_notifications_count}` : "Нет непрочитанных"}
-                                            </small>
-                                        </div>
-                                        <p className="comment-text">
-                                            Здесь отображаются последние события аккаунта: поддержка, лайки, просмотренное и входы в систему.
-                                        </p>
-                                    </div>
-
-                                    <div className="comment-right">
-                                        <button className="comment-go" aria-label="Прочитать все" onClick={markAllNotificationsRead}>
-                                            <img src="/Arrow_right.svg" alt="" />
-                                        </button>
-                                    </div>
-                                </article>
-
-                                {(notifications || []).slice(0, 3).map((n) => (
-                                    <article key={n.id} className="comment-card">
-                                        <div className="comment-left">
-                                            <div className="comment-meta">
-                                                <strong className="comment-title">{n.title}</strong>
-                                                <small className="comment-sub">{n.created_at}</small>
-                                            </div>
-                                            <p className="comment-text">{n.body}</p>
-                                        </div>
-
-                                        <div className="comment-right">
-                                            <button
-                                                className="comment-go"
-                                                aria-label="Отметить прочитанным"
-                                                onClick={() => markNotificationRead(n.id)}
-                                            >
-                                                <img src="/Arrow_right.svg" alt="" />
-                                            </button>
-                                        </div>
-                                    </article>
-                                ))}
-                            </div>
-                        </div>
-
                         <div style={{ marginTop: 18 }}>
                             <AdBanner />
                         </div>
@@ -395,58 +354,25 @@ export default function AccountPage({ navigate }) {
                     <div className="comments-wrap">
                         <div className="comments-list" aria-live="polite">
                             {comments.length > 0 ? (
-                                comments.map((c) => {
-                                    const fullStars = Math.floor(c.rating);
-                                    const halfStar = c.rating - fullStars >= 0.5;
-                                    const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-                                    const ratingNumber = c.rating > 0 ? Math.max(1, Math.min(5, Math.round(c.rating))) : 0;
-
-                                    return (
-                                        <article key={c.id} className="comment-card" role="article">
-                                            <div className="comment-left">
-                                                <div className="comment-meta">
-                                                    <strong className="comment-title">{c.title}</strong>
-                                                    <small className="comment-sub">{c.country}</small>
-                                                </div>
-                                                <p className="comment-text">{c.text}</p>
+                                comments.map((c) => (
+                                    <article key={c.id} className="comment-card" role="article">
+                                        <div className="comment-left">
+                                            <div className="comment-meta">
+                                                <strong className="comment-title">{c.title}</strong>
+                                                <small className="comment-sub">{c.country}</small>
                                             </div>
+                                            <p className="comment-text">{c.text}</p>
+                                        </div>
 
-                                            <div className="comment-right" aria-hidden="true">
-                                                <span className="star-oval" aria-label={ratingNumber > 0 ? `Рейтинг ${c.rating} из 5` : "Рейтинг недоступен"}>
-                                                    <span className="rating-row" aria-hidden="true">
-                                                        {ratingNumber > 0 ? (
-                                                            <>
-                                                                {Array.from({ length: fullStars }).map((_, i) => (
-                                                                    <img key={"f" + i} src="/star-filled.svg" alt="" className="star-icon" />
-                                                                ))}
-                                                                {halfStar && <img key="half" src="/star-half.svg" alt="" className="star-icon" />}
-                                                                {Array.from({ length: emptyStars }).map((_, i) => (
-                                                                    <img key={"e" + i} src="/star-empty.svg" alt="" className="star-icon" />
-                                                                ))}
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <img src="/star-empty.svg" alt="" className="star-icon" />
-                                                                <img src="/star-empty.svg" alt="" className="star-icon" />
-                                                                <img src="/star-empty.svg" alt="" className="star-icon" />
-                                                                <img src="/star-empty.svg" alt="" className="star-icon" />
-                                                                <img src="/star-empty.svg" alt="" className="star-icon" />
-                                                            </>
-                                                        )}
-                                                    </span>
+                                        <div className="comment-right" aria-hidden="true">
+                                            {renderStars(c.rating)}
 
-                                                    <span className="rating-number" aria-hidden="true">
-                                                        {ratingNumber > 0 ? ratingNumber : "—"}
-                                                    </span>
-                                                </span>
-
-                                                <button className="comment-go" aria-label="Перейти к тайтлу" onClick={() => openTmdbItem(c)}>
-                                                    <img src="/Arrow_right.svg" alt="" />
-                                                </button>
-                                            </div>
-                                        </article>
-                                    );
-                                })
+                                            <button className="comment-go" aria-label="Перейти к тайтлу" onClick={() => openTmdbItem(c)}>
+                                                <img src="/Arrow_right.svg" alt="" />
+                                            </button>
+                                        </div>
+                                    </article>
+                                ))
                             ) : (
                                 <div style={{ color: "#fff", opacity: 0.7 }}>Комментариев пока нет</div>
                             )}

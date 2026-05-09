@@ -133,9 +133,19 @@ export default function RegisterPage({ navigate }) {
                         <button
                             type="button"
                             className="link"
-                            onClick={() => navigate("/auth/login")}
+                            onClick={() => navigate("/login")}
                         >
                             Войти
+                        </button>
+                    </div>
+
+                    <div className="auth-alt">
+                        <button
+                            type="button"
+                            className="link"
+                            onClick={() => navigate("/auth")}
+                        >
+                            Вернуться к выбору
                         </button>
                     </div>
                 </form>

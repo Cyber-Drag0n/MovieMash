@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Header from "./Header";
 import "./App.css";
 import CategoriesCarousel from "./components/CategoriesCarousel";
@@ -10,9 +10,9 @@ import MoviesAndSeries from "./pages/MoviesAndSeries";
 import GenrePage from "./pages/GenrePage.jsx";
 import Support from "./pages/Support.jsx";
 import Subscriptions from "./pages/Subscriptions.jsx";
+import AuthPage from "./pages/AuthPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
-import AuthPage from "./pages/AuthPage.jsx";
 import AccountPage from "./pages/AccountPage.jsx";
 import MoviePage from "./pages/MoviePage.jsx";
 
@@ -44,6 +44,9 @@ const App = () => {
     }, []);
 
     const isHome = path === "/";
+    const isAuthHome = path === "/auth";
+    const isLoginPage = path === "/login" || path === "/auth/login";
+    const isRegisterPage = path === "/register" || path === "/auth/register";
 
     return (
         <main>
@@ -94,10 +97,11 @@ const App = () => {
                 {!isHome && path.startsWith("/support") && <Support />}
                 {!isHome && path.startsWith("/subscriptions") && <Subscriptions />}
                 {!isHome && path.startsWith("/account") && <AccountPage navigate={navigate} />}
-                {!isHome && path === "/auth/login" && <LoginPage navigate={navigate} />}
-                {!isHome && path === "/auth/register" && <RegisterPage navigate={navigate} />}
+                {!isHome && isAuthHome && <AuthPage navigate={navigate} />}
+                {!isHome && isLoginPage && <LoginPage navigate={navigate} />}
+                {!isHome && isRegisterPage && <RegisterPage navigate={navigate} />}
                 {!isHome && path.startsWith("/movie") && <MoviePage path={path} navigate={navigate} />}
-                {!isHome && path.startsWith("/auth") && <AuthPage navigate={navigate} />}
+                {!isHome && path.startsWith("/auth") && !isAuthHome && !isLoginPage && !isRegisterPage && <AuthPage navigate={navigate} />}
             </div>
 
             <Footer />

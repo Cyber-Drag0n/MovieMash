@@ -13,7 +13,46 @@ function getTmdbToken() {
     }
 }
 
-async function tmdbFetch(path) {
+async function tmdbFetch(path) {function Card({ item, variant }) {
+    const rating = Math.max(0, Math.min(5, Number(item.rating || 0)));
+    const fullStars = Math.floor(rating);
+    const halfStar = rating - fullStars >= 0.5;
+    const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+
+    return (
+        <article className="category-card top-card must-card" role="listitem">
+            <div className="must-poster-wrap">
+                <img
+                    src={item.img || "/example.jpg"}
+                    alt={item.title || ""}
+                    className="must-poster"
+                    onError={(e) => {
+                        e.currentTarget.src = "/example.jpg";
+                    }}
+                />
+            </div>
+
+            <span className="trend-badge left must-left" aria-hidden="true">
+                <img src="/Time.svg" alt="" />
+                <span className="badge-text">{item.duration || "—"}</span>
+            </span>
+
+            <span className="trend-badge right must-right" aria-hidden="true">
+                <span className="rating-row" aria-label={`Рейтинг ${rating} из 5`}>
+                    {Array.from({ length: fullStars }).map((_, i) => (
+                        <img key={"f" + i} src="/star-filled.svg" alt="" className="star-icon" />
+                    ))}
+                    {halfStar && <img key="half" src="/star-half.svg" alt="" className="star-icon" />}
+                    {Array.from({ length: emptyStars }).map((_, i) => (
+                        <img key={"e" + i} src="/star-empty.svg" alt="" className="star-icon" />
+                    ))}
+                </span>
+
+                {variant !== "ratings" && <span className="badge-text votes-text">{item.votes || ""}</span>}
+            </span>
+        </article>
+    );
+}
     const token = getTmdbToken();
     if (!token) return null;
 
@@ -29,8 +68,9 @@ async function tmdbFetch(path) {
 }
 
 function Card({ item, variant }) {
-    const fullStars = Math.floor((Number(item.rating || 0) / 2));
-    const halfStar = (Number(item.rating || 0) / 2) - fullStars >= 0.5;
+    const rating = Math.max(0, Math.min(5, Number(item.rating || 0)));
+    const fullStars = Math.floor(rating);
+    const halfStar = rating - fullStars >= 0.5;
     const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
 
     return (
@@ -40,7 +80,9 @@ function Card({ item, variant }) {
                     src={item.img || "/example.jpg"}
                     alt={item.title || ""}
                     className="must-poster"
-                    onError={(e) => { e.currentTarget.src = "/example.jpg"; }}
+                    onError={(e) => {
+                        e.currentTarget.src = "/example.jpg";
+                    }}
                 />
             </div>
 
@@ -50,7 +92,7 @@ function Card({ item, variant }) {
             </span>
 
             <span className="trend-badge right must-right" aria-hidden="true">
-                <span className="rating-row" aria-label={`Рейтинг ${item.rating || 0} из 5`}>
+                <span className="rating-row" aria-label={`Рейтинг ${rating} из 5`}>
                     {Array.from({ length: fullStars }).map((_, i) => (
                         <img key={"f" + i} src="/star-filled.svg" alt="" className="star-icon" />
                     ))}

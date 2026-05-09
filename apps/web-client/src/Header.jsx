@@ -1,17 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./Header.css";
+import { apiFetch, getJwt } from "./lib/api";
 
 const navItems = [
     { label: "Домой", path: "/" },
     { label: "Фильмы и сериалы", path: "/media" },
     { label: "Поддержка", path: "/support" },
     { label: "Подписки", path: "/subscriptions" },
-];
-
-const icons = [
-    { src: "/Search.svg", alt: "Поиск", href: "/search", type: "search" },
-    { src: "/Notifications.svg", alt: "Уведомления", href: "/notifications", type: "notif" },
-    { src: "/Account.svg", alt: "Профиль", href: "/account", type: "link" },
 ];
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
@@ -61,7 +56,16 @@ function resultSubtitle(item) {
     return `${type} • ${year}`;
 }
 
-const Header = ({ navigate, currentPath }) => {
+function normalizePath(path) {
+    if (!path) return "/";
+    return path.replace(/\/+$/, "") || "/";
+}
+
+function isAbsoluteUrl(value) {
+    return /^https?:\/\//i.test(String(value || ""));
+}
+
+export default function Header({ navigate, currentPath }) {
     const [searchOpen, setSearchOpen] = useState(false);
     const [query, setQuery] = useState("");
     const [results, setResults] = useState([]);
@@ -72,13 +76,36 @@ const Header = ({ navigate, currentPath }) => {
     const toggleBtnRef = useRef(null);
 
     const [notificationsOpen, setNotificationsOpen] = useState(false);
-    const [notifEnabled, setNotifEnabled] = useState(true);
+    const [notificationItems, setNotificationItems] = useState([]);
+    const [notifLoading, setNotifLoading] = useState(false);
     const notifRef = useRef(null);
     const notifBtnRef = useRef(null);
 
     const bearer = useMemo(() => getBearerFromEnv(), []);
+    const [isAuthed, setIsAuthed] = useState(!!getJwt());
 
-    const goto = (path) => {
+    useEffect(() => {
+        const syncAuth = () => setIsAuthed(!!getJwt());
+        syncAuth();
+
+        const onStorage = (e) => {
+            if (!e || e.key === "movie_mash_token" || e.key === null) {
+                syncAuth();
+            }
+        };
+
+        const onAuthChanged = () => syncAuth();
+
+        window.addEventListener("storage", onStorage);
+        window.addEventListener("movie-mash-auth-changed", onAuthChanged);
+
+        return () => {
+            window.removeEventListener("storage", onStorage);
+            window.removeEventListener("movie-mash-auth-changed", onAuthChanged);
+        };
+    }, []);
+
+    const goto = useCallback((path) => {
         setSearchOpen(false);
         setNotificationsOpen(false);
         setQuery("");
@@ -87,7 +114,7 @@ const Header = ({ navigate, currentPath }) => {
 
         if (navigate) navigate(path);
         else window.location.href = path;
-    };
+    }, [navigate]);
 
     const handleNavClick = (e, to) => {
         if (navigate) {
@@ -252,7 +279,33 @@ const Header = ({ navigate, currentPath }) => {
             document.removeEventListener("keydown", onKey);
             document.removeEventListener("mousedown", onClickOutside);
         };
-    }, [searchOpen, results, activeIndex]);
+    }, [searchOpen, results, activeIndex, goto]);
+
+    useEffect(() => {
+        if (!notificationsOpen) return;
+
+        const loadNotifications = async () => {
+            if (!isAuthed) {
+                setNotificationItems([]);
+                setNotifLoading(false);
+                return;
+            }
+
+            setNotifLoading(true);
+            try {
+                const res = await apiFetch("/api/notifications");
+                setNotificationItems(
+                    Array.isArray(res?.items) ? res.items.filter((item) => !item.is_read) : []
+                );
+            } catch {
+                setNotificationItems([]);
+            } finally {
+                setNotifLoading(false);
+            }
+        };
+
+        loadNotifications();
+    }, [notificationsOpen, isAuthed]);
 
     useEffect(() => {
         if (!notificationsOpen) return;
@@ -283,10 +336,40 @@ const Header = ({ navigate, currentPath }) => {
         };
     }, [notificationsOpen]);
 
-    const normalized = (p) => {
-        if (!p) return "/";
-        return p.replace(/\/+$/, "") || "/";
+    const handleOpenNotification = async (item) => {
+        try {
+            if (item?.id && !item?.is_read) {
+                await apiFetch(`/api/notifications/${item.id}/read`, { method: "PATCH" });
+            }
+        } catch {
+            // ignore
+        }
+
+        setNotificationItems((prev) => prev.filter((n) => String(n.id) !== String(item.id)));
+        setNotificationsOpen(false);
+
+        if (!item?.link_url) return;
+        if (isAbsoluteUrl(item.link_url)) {
+            window.open(item.link_url, "_blank", "noopener,noreferrer");
+            return;
+        }
+        goto(normalizePath(item.link_url));
     };
+
+    const markAllRead = async () => {
+        try {
+            await apiFetch("/api/notifications/read-all", { method: "PATCH" });
+            setNotificationItems((prev) => prev.map((n) => ({ ...n, is_read: 1 })));
+        } catch {
+            // ignore
+        }
+    };
+
+    const unreadCount = notificationItems.filter((n) => !n.is_read).length;
+    const authTarget = isAuthed ? "/account" : "/auth";
+    const authLabel = isAuthed ? "Аккаунт" : "Войти";
+
+    const normalized = (p) => normalizePath(p);
 
     return (
         <>
@@ -314,93 +397,102 @@ const Header = ({ navigate, currentPath }) => {
                         })}
                     </nav>
 
-                    <div className="icons-container" aria-hidden="false">
-                        {icons.map((ic) => {
-                            if (ic.type === "search") {
-                                return (
-                                    <button
-                                        key={ic.src}
-                                        ref={toggleBtnRef}
-                                        type="button"
-                                        className="icon-btn search-toggle"
-                                        aria-label={searchOpen ? "Закрыть поиск" : "Открыть поиск"}
-                                        title={searchOpen ? "Закрыть поиск" : "Поиск"}
-                                        aria-expanded={searchOpen}
-                                        onClick={() => {
-                                            setNotificationsOpen(false);
-                                            setSearchOpen((s) => !s);
-                                        }}
-                                    >
-                                        {searchOpen ? (
-                                            <span className="search-close-sign" aria-hidden="true">
-                                                ✕
-                                            </span>
-                                        ) : (
-                                            <img src={ic.src} alt={ic.alt} className="icon-img" />
-                                        )}
-                                    </button>
-                                );
-                            }
-
-                            if (ic.type === "notif") {
-                                return (
-                                    <div key={ic.src} style={{ position: "relative" }}>
-                                        <button
-                                            ref={notifBtnRef}
-                                            type="button"
-                                            className="icon-btn icon-btn--notif"
-                                            aria-label="Уведомления"
-                                            title="Уведомления"
-                                            aria-haspopup="dialog"
-                                            aria-expanded={notificationsOpen}
-                                            onClick={() => {
-                                                setSearchOpen(false);
-                                                setNotificationsOpen((v) => !v);
-                                            }}
-                                        >
-                                            <img src={ic.src} alt={ic.alt} className="icon-img" />
-                                        </button>
-                                    </div>
-                                );
-                            }
-
-                            return (
-                                <a
-                                    key={ic.src}
-                                    href={ic.href}
-                                    className="icon-btn"
-                                    aria-label={ic.alt}
-                                    title={ic.alt}
-                                    onClick={(e) => handleNavClick(e, ic.href)}
-                                >
-                                    <img src={ic.src} alt={ic.alt} className="icon-img" />
-                                </a>
-                            );
-                        })}
-
-                        <div
-                            ref={notifRef}
-                            className={`notif-popup ${notificationsOpen ? "open" : ""}`}
-                            role="dialog"
-                            aria-label="Уведомления"
-                            aria-hidden={!notificationsOpen}
+                    <div className="icons-container">
+                        <button
+                            ref={toggleBtnRef}
+                            type="button"
+                            className="icon-btn search-toggle"
+                            aria-label={searchOpen ? "Закрыть поиск" : "Открыть поиск"}
+                            title={searchOpen ? "Закрыть поиск" : "Поиск"}
+                            aria-expanded={searchOpen}
+                            onClick={() => {
+                                setNotificationsOpen(false);
+                                setSearchOpen((s) => !s);
+                            }}
                         >
-                            <div className="notif-inner">
-                                <div className="notif-empty">У Вас пока нет уведомлений</div>
+                            {searchOpen ? (
+                                <span className="search-close-sign" aria-hidden="true">
+                                    ✕
+                                </span>
+                            ) : (
+                                <img src="/Search.svg" alt="Поиск" className="icon-img" />
+                            )}
+                        </button>
 
-                                <div className="notif-footer">
-                                    <label className="notif-toggle" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                                        <span className="notif-toggle-text">Отключить уведомления?</span>
-                                        <input
-                                            type="checkbox"
-                                            aria-label="Отключить уведомления"
-                                            checked={!notifEnabled}
-                                            onChange={() => setNotifEnabled((v) => !v)}
-                                        />
-                                    </label>
+                        {isAuthed && (
+                            <div className="notif-wrap">
+                                <button
+                                    ref={notifBtnRef}
+                                    type="button"
+                                    className="icon-btn icon-btn--notif"
+                                    aria-label="Уведомления"
+                                    title="Уведомления"
+                                    aria-haspopup="dialog"
+                                    aria-expanded={notificationsOpen}
+                                    onClick={() => {
+                                        setSearchOpen(false);
+                                        setNotificationsOpen((v) => !v);
+                                    }}
+                                >
+                                    <img src="/Notifications.svg" alt="Уведомления" className="icon-img" />
+                                    {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
+                                </button>
+
+                                <div
+                                    ref={notifRef}
+                                    className={`notif-popup ${notificationsOpen ? "open" : ""}`}
+                                    role="dialog"
+                                    aria-label="Уведомления"
+                                    aria-hidden={!notificationsOpen}
+                                >
+                                    <div className="notif-inner">
+                                        <div className="notif-header-row">
+                                            <strong className="notif-title">Уведомления</strong>
+                                            {notificationItems.length > 0 && (
+                                                <button type="button" className="notif-mark-all" onClick={markAllRead}>
+                                                    Прочитать все
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {notifLoading ? (
+                                            <div className="notif-empty">Загрузка уведомлений...</div>
+                                        ) : notificationItems.length === 0 ? (
+                                            <div className="notif-empty">У Вас пока нет уведомлений</div>
+                                        ) : (
+                                            <div className="notif-list">
+                                                {notificationItems.slice(0, 6).map((item) => (
+                                                    <button
+                                                        key={item.id}
+                                                        type="button"
+                                                        className={`notif-item ${item.is_read ? "read" : "unread"}`}
+                                                        onClick={() => handleOpenNotification(item)}
+                                                    >
+                                                        <div className="notif-item-title-row">
+                                                            <span className="notif-item-title">{item.title}</span>
+                                                            {!item.is_read && <span className="notif-dot" />}
+                                                        </div>
+                                                        <div className="notif-item-body">{item.body}</div>
+                                                        <div className="notif-item-date">{item.created_at}</div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
+
+                        <button
+                            type="button"
+                            className="user-entry-btn"
+                            aria-label={authLabel}
+                            title={authLabel}
+                            onClick={() => goto(authTarget)}
+                        >
+                            <img src="/Account.svg" alt="" className="icon-img" />
+                            <span>{authLabel}</span>
+                        </button>
                     </div>
                 </div>
             </header>
@@ -490,6 +582,4 @@ const Header = ({ navigate, currentPath }) => {
             )}
         </>
     );
-};
-
-export default Header;
+}

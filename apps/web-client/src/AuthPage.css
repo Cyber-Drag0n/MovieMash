@@ -181,3 +181,76 @@
     text-decoration: underline;
     cursor: pointer;
 }
+.auth-hub {
+    align-items: center;
+    padding-top: 120px;
+}
+
+.auth-hub-container {
+    max-width: 760px;
+}
+
+.auth-hub-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+    margin-bottom: 22px;
+}
+
+.auth-hub-logo {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+}
+
+.auth-hub-text {
+    margin: 0;
+    color: rgba(255,255,255,0.78);
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 560px;
+}
+
+.auth-hub-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.auth-hub-btn {
+    width: 100%;
+}
+
+.auth-secondary {
+    margin-top: 8px;
+    background: #1b1b1b;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 400;
+    font-size: 17px;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.auth-secondary:hover {
+    transform: translateY(-2px);
+}
+
+.auth-hub-foot {
+    margin-top: 16px;
+    text-align: center;
+}
+
+@media (max-width: 720px) {
+    .auth-hub-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-hub {
+        padding-top: 96px;
+    }
+}

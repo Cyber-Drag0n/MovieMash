@@ -575,4 +575,56 @@
     margin-left: 4px;
     margin-top: 4px;
 }
+.account-page .star-oval,
+.star-oval {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(10,10,10,0.85);
+    border: 1px solid rgba(255,255,255,0.03);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.45);
+    white-space: nowrap;
+}
 
+.account-page .rating-row,
+.rating-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.account-page .star-icon,
+.star-icon {
+    width: 12px;
+    height: 12px;
+    object-fit: contain;
+    display: inline-block;
+}
+
+.account-page .rating-number,
+.rating-number {
+    margin: 0 0 0 2px;
+    line-height: 1;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.account-page .comment-right {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.account-page .must-right {
+    right: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}

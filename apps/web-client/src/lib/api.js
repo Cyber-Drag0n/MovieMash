@@ -1,16 +1,26 @@
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
+function emitAuthChange() {
+    try {
+        window.dispatchEvent(new Event("movie-mash-auth-changed"));
+    } catch {
+        // ignore
+    }
+}
+
 export function getJwt() {
     return localStorage.getItem("movie_mash_token");
 }
 
 export function setJwt(token) {
     localStorage.setItem("movie_mash_token", token);
+    emitAuthChange();
 }
 
 export function clearJwt() {
     localStorage.removeItem("movie_mash_token");
     localStorage.removeItem("movie_mash_user");
+    emitAuthChange();
 }
 
 export async function apiFetch(path, options = {}) {
