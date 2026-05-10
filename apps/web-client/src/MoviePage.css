@@ -57,6 +57,14 @@
     line-height: 1.6;
     font-weight: 400;
 }
+
+.review-text{
+    width: 200px;
+    color: rgba(207,207,207,1);
+    font-size: 15px;
+    line-height: 1.6;
+    font-weight: 400;
+}
 .muted-text {
     color: rgba(153,153,153,1);
     font-size: 14px;
@@ -135,7 +143,17 @@
     object-fit: cover;
     border: 2px solid rgba(255,255,255,0.03);
 }
+.movie-main {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
 
+.movie-desc.card,
+.movie-cast.card,
+.movie-reviews.card {
+    margin-bottom: 0;
+}
 /* reviews */
 .reviews-header {
     display: flex;
@@ -159,12 +177,14 @@
     flex-wrap: wrap;
 }
 .review-card {
+    margin-bottom: 20px;
     width: calc(50% - 8px);
     padding: 14px;
     border-radius: 10px;
     background: #0f0f0f;
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;    /* ← добавляем: прижимаем звёзды к верху */
     gap: 12px;
     box-sizing: border-box;
 }
@@ -233,43 +253,111 @@
     line-height: 1;
 }
 
-/* arrows */
+.carousel-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 18px;
+    padding: 10px 12px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
 .ctrl-arrow {
-    background: #0F0F0F;
-    border: 1px solid #1F1F1F;
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, #1e1e1e, #111111);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
     padding: 0;
-}
-.ctrl-arrow-img {
-    width: 20px;
-    height: 20px;
-    object-fit: contain;
-    display: block;
-}
-.prog-line {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-}
-.dot {
-    width: 28px;
-    height: 4px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 2px;
-    display: inline-block;
-}
-.dot.active {
-    background: linear-gradient(90deg, rgba(229, 0, 0, 1), #380000);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
+.ctrl-arrow:hover {
+    transform: translateY(-1px);
+    border-color: rgba(232, 18, 18, 0.32);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.48);
+}
+
+.ctrl-arrow:active {
+    transform: scale(0.96);
+}
+
+.ctrl-arrow-img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    display: block;
+    opacity: 0.95;
+}
+
+.ctrl-arrow-right img {
+    transform: rotate(180deg);
+}
+
+.prog-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 220px;
+    max-width: 520px;
+    padding: 0;
+}
+
+.dot {
+    flex: 1;
+    height: 6px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.dot:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.dot.active {
+    background: linear-gradient(90deg, #e81212, #7b0f0f);
+    box-shadow: 0 0 0 1px rgba(232, 18, 18, 0.25), 0 0 16px rgba(232, 18, 18, 0.12);
+}
+
+.arrows{
+    width: 20px;
+    height: 20px;
+}
+@media (max-width: 640px) {
+    .carousel-controls {
+        gap: 8px;
+        padding: 8px;
+    }
+
+    .ctrl-arrow {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+    }
+
+    .prog-line {
+        min-width: 0;
+        gap: 8px;
+    }
+
+    .dot {
+        height: 5px;
+    }
+}
 /* side */
 .movie-side {
     padding-left: 8px;

@@ -4,7 +4,7 @@ import FAQ from "../components/FAQ.jsx";
 import AdBanner from "../components/AdBanner.jsx";
 import { apiFetch } from "../lib/api";
 
-export default function Support() {
+export default function Support({ navigate }) {
     const [form, setForm] = useState({
         firstName: "",
         lastName: "",
@@ -161,7 +161,7 @@ export default function Support() {
                 </section>
             </div>
 
-            <FAQ />
+            <FAQ navigate={navigate} />
             <AdBanner />
         </main>
     );

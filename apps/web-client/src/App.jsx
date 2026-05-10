@@ -75,7 +75,11 @@ const App = () => {
                         </div>
 
                         <div className="cta-wrapper">
-                            <button className="cta-button" aria-label="Начать просмотр">
+                            <button
+                                className="cta-button"
+                                aria-label="Начать просмотр"
+                                onClick={() => navigate('/media')}
+                            >
                                 <img src="/Play.svg" alt="" aria-hidden="true" className="cta-icon" />
                                 <span className="cta-text">Начать просмотр</span>
                             </button>
@@ -86,7 +90,7 @@ const App = () => {
                         </section>
 
                         <section id="faq">
-                            <FAQ />
+                            <FAQ navigate={navigate} />
                         </section>
 
                         <section id="plans">

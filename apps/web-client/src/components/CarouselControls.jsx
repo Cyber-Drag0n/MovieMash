@@ -11,7 +11,7 @@ export default function CarouselControls({ page = 0, pages = 1, onPrev, onNext }
                 aria-label="Назад"
                 title="Назад"
             >
-                ←
+                <img className="arrows" src="/Arrow_left.svg" alt="prev" />
             </button>
 
             <div className="progress-line" aria-hidden="true">
@@ -27,7 +27,7 @@ export default function CarouselControls({ page = 0, pages = 1, onPrev, onNext }
                 aria-label="Вперед"
                 title="Вперед"
             >
-                →
+                <img className="arrows" src="/Arrow_right.svg" alt="next" />
             </button>
         </div>
     );

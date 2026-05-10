@@ -175,7 +175,7 @@ export default function CategoriesCarousel({ navigate }) {
                         aria-label="Назад"
                         title="Назад"
                     >
-                        ←
+                        <img className="arrows" src="/Arrow_left.svg" alt="prev" />
                     </button>
 
                     <div className="progress-line" aria-hidden="true">
@@ -191,7 +191,7 @@ export default function CategoriesCarousel({ navigate }) {
                         aria-label="Вперед"
                         title="Вперед"
                     >
-                        →
+                        <img className="arrows" src="/Arrow_right.svg" alt="next" />
                     </button>
                 </div>
             </div>

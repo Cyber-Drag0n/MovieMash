@@ -281,6 +281,30 @@ export default function MoviePage({ path, navigate }) {
     const [reviewSaving, setReviewSaving] = useState(false);
     const [publicReviews, setPublicReviews] = useState([]);
 
+    const [reviewsPage, setReviewsPage] = useState(0);
+    const reviewsPerPage = 4;
+
+    const totalReviewPages = Math.ceil(publicReviews.length / reviewsPerPage);
+
+    const heroPrev = () => {
+        if (totalReviewPages === 0) return;
+        setReviewsPage((prev) => (prev > 0 ? prev - 1 : totalReviewPages - 1));
+    };
+
+    const heroNext = () => {
+        if (totalReviewPages === 0) return;
+        setReviewsPage((prev) => (prev < totalReviewPages - 1 ? prev + 1 : 0));
+    };
+
+    const currentReviews = useMemo(() => {
+        const start = reviewsPage * reviewsPerPage;
+        return publicReviews.slice(start, start + reviewsPerPage);
+    }, [publicReviews, reviewsPage, reviewsPerPage]);
+
+    useEffect(() => {
+        setReviewsPage(0);
+    }, [params?.id]);
+
     useEffect(() => {
         const syncAuth = () => setIsAuthorized(!!getJwt());
 
@@ -925,15 +949,14 @@ export default function MoviePage({ path, navigate }) {
                         )}
 
                         <div className="reviews-grid">
-                            {publicReviews.length > 0 ? publicReviews.slice(0, 4).map((r) => {
+                            {currentReviews.length > 0 ? currentReviews.map((r) => {
                                 const rating = Math.max(0, Math.min(5, Number(r.rating || 0)));
 
                                 return (
                                     <article key={r.id} className="review-card">
                                         <div className="review-left">
                                             <strong className="review-author">{r.author || "Пользователь"}</strong>
-                                            <small className="review-origin muted-text">{r.author_details?.username || "MovieMash"}</small>
-                                            <p className="review-text body-text">{r.content || ""}</p>
+                                            <p className="review-text">{r.content || ""}</p>
                                         </div>
 
                                         <div className="review-right">
@@ -952,19 +975,39 @@ export default function MoviePage({ path, navigate }) {
                             )}
                         </div>
 
-                        <div className="carousel-controls" aria-hidden="true">
-                            <button className="ctrl-arrow" type="button" aria-label="Предыдущая">
-                                <img src="/Arrow_left.svg" alt="prev" className="ctrl-arrow-img" />
-                            </button>
+                        {publicReviews.length > reviewsPerPage && (
+                            <div className="carousel-controls">
+                                <button
+                                    type="button"
+                                    className="ctrl-arrow"
+                                    onClick={heroPrev}
+                                    aria-label="Предыдущие отзывы"
+                                >
+                                    <img src="/Arrow_left.svg" alt="" className="ctrl-arrow-img" />
+                                </button>
 
-                            <div className="prog-line">
-                                <span className="dot active" />
+                                <div className="prog-line" aria-label="Страницы отзывов">
+                                    {Array.from({ length: totalReviewPages }).map((_, idx) => (
+                                        <button
+                                            key={idx}
+                                            type="button"
+                                            className={`dot ${idx === reviewsPage ? "active" : ""}`}
+                                            onClick={() => setReviewsPage(idx)}
+                                            aria-label={`Открыть страницу отзывов ${idx + 1}`}
+                                        />
+                                    ))}
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className="ctrl-arrow ctrl-arrow-right"
+                                    onClick={heroNext}
+                                    aria-label="Следующие отзывы"
+                                >
+                                    <img src="/Arrow_left.svg" alt="" className="ctrl-arrow-img" />
+                                </button>
                             </div>
-
-                            <button className="ctrl-arrow" type="button" aria-label="Следующая">
-                                <img src="/Arrow_right.svg" alt="next" className="ctrl-arrow-img" />
-                            </button>
-                        </div>
+                        )}
                     </div>
 
                     {renderSeriesSeasons()}

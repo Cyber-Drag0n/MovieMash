@@ -691,17 +691,16 @@
 
 /* FOOTER */
 
-/* --- layout для "липкого" футера --- */
-html, body, #root {
-  height: 100%;
-  margin: 0; /* чтобы не было никаких внешних отступов */
+html, body, #root, main {
+  width: 100%;
+  margin: 0;
+  overflow-x: clip;
 }
 
 /* главный контейнер уже у тебя <main> в App.jsx — делаем его флекс-колонкой */
 main {
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* чтобы можно было приклеить футер к низу при небольшой высоте контента */
 }
 
 /* основной контент тянется, занимает всё пространство между header и footer */
@@ -715,25 +714,27 @@ main {
 
 /* --- FOOTER: фон растягивается во всю ширину окна --- */
 .site-footer {
-  width: 100%;
-  /* если хочешь абсолютное перекрытие ширины (когда есть scrollbars), можно использовать 100vw, но это иногда вызывает горизонтальный скролл
-     поэтому оставляем width:100% и обнуляем боковые отступы */
+  border-radius: 14px;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  margin-right: -50vw;
+
   background: #0b0b0b;
   color: #bdbdbd;
-
-  /* боковых отступов не должно быть — только сверху/снизу */
-  padding: 46px 0;   /* 46px сверху/снизу, но по бокам — 0 */
-
+  padding: 46px 0;
   border-top: 1px solid rgba(255,255,255,0.02);
-  margin-top: 60px; /* если нужен отступ сверху — оставляем, иначе обнули */
+  margin-top: 60px;
   box-sizing: border-box;
 }
 
-/* внутренняя "табличка" (контент) — центрируется и не растягивается до краёв */
+
 .footer-inner {
-  max-width: 1200px;   /* согласовано с .page-content */
-  margin: 0 auto;      /* центрируем внутри full-bleed блока */
-  padding: 0 16px;     /* горизонтальные паддинги только внутри контента (не на фоне) */
+  width: min(1200px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 0 16px;
   box-sizing: border-box;
 }
 

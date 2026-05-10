@@ -46,8 +46,7 @@ const faqData = [
     }
 ];
 
-export default function FAQ() {
-    // теперь это массив id открытых вопросов — можно открыть несколько
+export default function FAQ({ navigate }) {   // ← принимаем navigate из пропсов
     const [openIds, setOpenIds] = useState([]);
 
     const mid = Math.ceil(faqData.length / 2);
@@ -68,9 +67,10 @@ export default function FAQ() {
                         самые распространённые вопросы о MovieMash.
                     </p>
                 </div>
-
                 <div className="faq-action">
-                    <button className="ask-btn">Спросить вопрос</button>
+                    <button className="ask-btn" onClick={() => navigate('/support')}>
+                        Спросить вопрос
+                    </button>
                 </div>
             </div>
 
@@ -91,7 +91,6 @@ export default function FAQ() {
                                         {item.q}
                                     </button>
 
-                                    {/* кнопка пустого содержимого — отображение плюса/минуса через CSS псевдоэлементы */}
                                     <button
                                         className="toggle-btn"
                                         onClick={() => toggle(item.id)}
