@@ -157,6 +157,12 @@ export default function AccountPage({ navigate }) {
         loadAccount();
     }, []);
 
+    useEffect(() => {
+        if (!loading && !authorized) {
+            navigate("/login");
+        }
+    }, [loading, authorized, navigate]);
+
     const watchedCount = useMemo(() => stats.watched_count || user.watchedCount || 0, [stats, user]);
 
     const onSaveProfile = async (formData) => {
@@ -211,81 +217,7 @@ export default function AccountPage({ navigate }) {
     }
 
     if (!authorized) {
-        return (
-            <div className="account-page">
-                <div className="account-top-spacer" />
-                <section className="profile-center" aria-label="Гость">
-                    <div className="profile-main">
-                        <div className="avatar-wrapper" title="Гость">
-                            <img src="/example.jpg" alt="Гость" className="avatar" />
-                        </div>
-
-                        <div className="profile-right">
-                            <div className="username-row">
-                                <h1 className="username">Гость</h1>
-                            </div>
-
-                            <p className="watched-count">
-                                <span className="count">0</span>
-                                <span className="label">Фильмы и сериалы</span>
-                            </p>
-
-                            <nav className="account-tabs" role="tablist" aria-label="Разделы аккаунта">
-                                {TABS.map((tab) => (
-                                    <button
-                                        key={tab.key}
-                                        role="tab"
-                                        className={`tab-btn ${activeTab === tab.key ? "active" : ""}`}
-                                        onClick={() => {
-                                            if (tab.key === "profile") setActiveTab("profile");
-                                            else navigate("/login");
-                                        }}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </nav>
-                        </div>
-                    </div>
-                </section>
-
-                <main className="account-content">
-                    <div className="comments-wrap">
-                        <div className="comments-list">
-                            <article className="comment-card">
-                                <div className="comment-left">
-                                    <div className="comment-meta">
-                                        <strong className="comment-title">Войдите, чтобы открыть аккаунт</strong>
-                                        <small className="comment-sub">гость</small>
-                                    </div>
-                                    <p className="comment-text">
-                                        После входа будут доступны лайки, просмотренное, сообщения поддержки и редактирование профиля.
-                                    </p>
-                                </div>
-
-                                <div className="comment-right">
-                                    <button className="comment-go" aria-label="Войти" onClick={() => navigate("/login")}>
-                                        <img src="/Arrow_right.svg" alt="" />
-                                    </button>
-                                </div>
-                            </article>
-                        </div>
-
-                        <div className="comments-ad">
-                            <div style={{ display: "grid", gap: 12, marginBottom: 18 }}>
-                                <button className="submit-btn" type="button" onClick={() => navigate("/login")}>
-                                    Войти
-                                </button>
-                                <button className="submit-btn" type="button" onClick={() => navigate("/register")}>
-                                    Зарегистрироваться
-                                </button>
-                            </div>
-                            <AdBanner />
-                        </div>
-                    </div>
-                </main>
-            </div>
-        );
+        return null;
     }
 
     return (
@@ -301,20 +233,28 @@ export default function AccountPage({ navigate }) {
                     <div className="profile-right">
                         <div className="username-row">
                             <h1 className="username">{user.username || "—"}</h1>
-                            <button
-                                className="edit-btn"
-                                onClick={() => setIsEditing(true)}
-                                aria-label="Редактировать профиль"
-                                title="Редактировать профиль"
-                            >
-                                ✎
-                            </button>
-                        </div>
 
-                        <p className="watched-count">
-                            <span className="count">{watchedCount}</span>
-                            <span className="label">Фильмы и сериалы</span>
-                        </p>
+                            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                                <button
+                                    className="edit-btn"
+                                    onClick={() => setIsEditing(true)}
+                                    aria-label="Редактировать профиль"
+                                    title="Редактировать профиль"
+                                >
+                                    ✎
+                                </button>
+
+                                <button
+                                    className="submit-btn"
+                                    type="button"
+                                    onClick={logout}
+                                    aria-label="Выйти"
+                                    title="Выйти"
+                                >
+                                    Выйти
+                                </button>
+                            </div>
+                        </div>
 
                         <nav className="account-tabs" role="tablist" aria-label="Разделы аккаунта">
                             {TABS.map((tab) => (
@@ -342,8 +282,7 @@ export default function AccountPage({ navigate }) {
             <main className="account-content">
                 {activeTab === "profile" && (
                     <>
-                        <AccountCarousel title="Оценки и просмотры" variant="ratings" />
-                        <AccountCarousel title="Буду смотреть" variant="watchlist" />
+                        <AccountCarousel title="Буду смотреть" variant="watchlist" navigate={navigate} />
                         <div style={{ marginTop: 18 }}>
                             <AdBanner />
                         </div>
@@ -386,7 +325,7 @@ export default function AccountPage({ navigate }) {
 
                 {activeTab === "likes" && (
                     <>
-                        <AccountCarousel title="Лайки" variant="favorites" />
+                        <AccountCarousel title="Лайки" variant="favorites" navigate={navigate} />
                         <div style={{ marginTop: 18 }}>
                             <AdBanner />
                         </div>

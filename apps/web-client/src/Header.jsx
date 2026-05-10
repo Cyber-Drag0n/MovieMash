@@ -371,6 +371,20 @@ export default function Header({ navigate, currentPath }) {
 
     const normalized = (p) => normalizePath(p);
 
+    const formatNotificationItem = (item) => {
+        if (item?.type === "support") {
+            return {
+                title: item.title || "Ответ от поддержки",
+                body: item.body || "Поддержка ответила на ваше обращение",
+            };
+        }
+
+        return {
+            title: item?.title || "Уведомление",
+            body: item?.body || "",
+        };
+    };
+
     return (
         <>
             <header className="topbar" role="navigation" aria-label="Main navigation">
@@ -461,21 +475,25 @@ export default function Header({ navigate, currentPath }) {
                                             <div className="notif-empty">У Вас пока нет уведомлений</div>
                                         ) : (
                                             <div className="notif-list">
-                                                {notificationItems.slice(0, 6).map((item) => (
-                                                    <button
-                                                        key={item.id}
-                                                        type="button"
-                                                        className={`notif-item ${item.is_read ? "read" : "unread"}`}
-                                                        onClick={() => handleOpenNotification(item)}
-                                                    >
-                                                        <div className="notif-item-title-row">
-                                                            <span className="notif-item-title">{item.title}</span>
-                                                            {!item.is_read && <span className="notif-dot" />}
-                                                        </div>
-                                                        <div className="notif-item-body">{item.body}</div>
-                                                        <div className="notif-item-date">{item.created_at}</div>
-                                                    </button>
-                                                ))}
+                                                {notificationItems.slice(0, 6).map((item) => {
+                                                    const formatted = formatNotificationItem(item);
+
+                                                    return (
+                                                        <button
+                                                            key={item.id}
+                                                            type="button"
+                                                            className={`notif-item ${item.is_read ? "read" : "unread"}`}
+                                                            onClick={() => handleOpenNotification(item)}
+                                                        >
+                                                            <div className="notif-item-title-row">
+                                                                <span className="notif-item-title">{formatted.title}</span>
+                                                                {!item.is_read && <span className="notif-dot" />}
+                                                            </div>
+                                                            <div className="notif-item-body">{formatted.body}</div>
+                                                            <div className="notif-item-date">{item.created_at}</div>
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
                                         )}
                                     </div>
@@ -491,7 +509,6 @@ export default function Header({ navigate, currentPath }) {
                             onClick={() => goto(authTarget)}
                         >
                             <img src="/Account.svg" alt="" className="icon-img" />
-                            <span>{authLabel}</span>
                         </button>
                     </div>
                 </div>

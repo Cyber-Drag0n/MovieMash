@@ -370,6 +370,7 @@
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid rgba(255,255,255,0.03);
+    margin: 13px;
 }
 .genre-card__img {
     width: 100%;

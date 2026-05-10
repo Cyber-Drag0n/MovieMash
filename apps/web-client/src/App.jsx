@@ -1,3 +1,4 @@
+// apps/web-client/src/App.jsx
 import React, { useCallback, useEffect, useState } from "react";
 import Header from "./Header";
 import "./App.css";
@@ -15,6 +16,8 @@ import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import AccountPage from "./pages/AccountPage.jsx";
 import MoviePage from "./pages/MoviePage.jsx";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage.jsx";
+import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
 
 const normalizePath = (p) => {
     if (!p) return "/";
@@ -47,6 +50,8 @@ const App = () => {
     const isAuthHome = path === "/auth";
     const isLoginPage = path === "/login" || path === "/auth/login";
     const isRegisterPage = path === "/register" || path === "/auth/register";
+    const isForgotPasswordPage = path === "/auth/forgot-password";
+    const isResetPasswordPage = path === "/auth/reset-password";
 
     return (
         <main>
@@ -100,8 +105,10 @@ const App = () => {
                 {!isHome && isAuthHome && <AuthPage navigate={navigate} />}
                 {!isHome && isLoginPage && <LoginPage navigate={navigate} />}
                 {!isHome && isRegisterPage && <RegisterPage navigate={navigate} />}
+                {!isHome && isForgotPasswordPage && <ForgotPasswordPage navigate={navigate} />}
+                {!isHome && isResetPasswordPage && <ResetPasswordPage navigate={navigate} />}
                 {!isHome && path.startsWith("/movie") && <MoviePage path={path} navigate={navigate} />}
-                {!isHome && path.startsWith("/auth") && !isAuthHome && !isLoginPage && !isRegisterPage && <AuthPage navigate={navigate} />}
+                {!isHome && path.startsWith("/auth") && !isAuthHome && !isLoginPage && !isRegisterPage && !isForgotPasswordPage && !isResetPasswordPage && <AuthPage navigate={navigate} />}
             </div>
 
             <Footer />

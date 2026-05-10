@@ -1,3 +1,4 @@
+// apps/web-client/src/pages/LoginPage.jsx
 import React, { useState } from "react";
 import "../AuthPage.css";
 import { apiFetch, setJwt } from "../lib/api";
@@ -22,6 +23,7 @@ export default function LoginPage({ navigate }) {
 
             setJwt(res.token);
             localStorage.setItem("movie_mash_user", JSON.stringify(res.user));
+            window.dispatchEvent(new Event("movie-mash-auth-changed"));
             navigate("/account");
         } catch (err) {
             setError(err.message || "Ошибка входа");
@@ -71,7 +73,14 @@ export default function LoginPage({ navigate }) {
                             </button>
                         </div>
 
-                        <div className="forgot-password">Забыли пароль?</div>
+                        <button
+                            type="button"
+                            className="forgot-password"
+                            onClick={() => navigate("/auth/forgot-password")}
+                            style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
+                        >
+                            Забыли пароль?
+                        </button>
                     </label>
 
                     {error && <div className="auth-error" role="alert">{error}</div>}

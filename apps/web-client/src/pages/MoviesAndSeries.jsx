@@ -785,15 +785,6 @@ export default function MoviesAndSeries({ navigate }) {
                             <img src="/Play.svg" alt="" className="ms-btn-icon" />
                             <span>Смотреть</span>
                         </button>
-                        <button className="ms-btn ms-btn-circle" aria-label="Добавить в список">
-                            <img src="/plus.svg" alt="" className="ms-btn-small-icon" />
-                        </button>
-                        <button className="ms-btn ms-btn-circle" aria-label="Нравится">
-                            <img src="/like.svg" alt="" className="ms-btn-small-icon" />
-                        </button>
-                        <button className="ms-btn ms-btn-circle" aria-label="Звук">
-                            <img src="/sound.svg" alt="" className="ms-btn-small-icon" />
-                        </button>
                     </div>
                 </div>
 

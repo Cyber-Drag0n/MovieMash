@@ -47,9 +47,9 @@ function getProfile(path) {
 
 function formatRuntime(minutes) {
     if (!minutes && minutes !== 0) return "—";
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return `${h}ч ${m.toString().padStart(2, "0")}мин`;
+    const h = Math.floor(Number(minutes) / 60);
+    const m = Number(minutes) % 60;
+    return `${h}ч ${String(m).padStart(2, "0")}мин`;
 }
 
 function buildVkVideoUrl(query) {
@@ -91,6 +91,10 @@ function normalizeProviderName(name) {
 function buildProviderUrl(providerName, title) {
     const q = encodeURIComponent(String(title || "").trim());
     const n = normalizeProviderName(providerName);
+
+    if (n.includes("vkvideo") || n.includes("vk")) {
+        return `https://vkvideo.ru/?q=${q}`;
+    }
 
     if (n.includes("primevideo") || n.includes("amazon")) {
         return `https://www.primevideo.com/search/ref=atv_nb_sr?ie=UTF8&phrase=${q}`;
@@ -225,6 +229,23 @@ function ReviewRatingPicker({ value, onChange }) {
     );
 }
 
+function normalizeReviewItem(item) {
+    const rawRating = Number(item?.rating || 0);
+    const rating = rawRating > 5 ? Math.max(0, Math.min(5, rawRating / 2)) : Math.max(0, Math.min(5, rawRating));
+
+    return {
+        id: item?.id || `${item?.username || "user"}-${item?.created_at || Date.now()}`,
+        author: item?.display_name || item?.username || "Пользователь",
+        author_details: {
+            username: item?.username || item?.display_name || "MovieMash",
+        },
+        content: item?.review_text || item?.content || "",
+        rating,
+        review_status: item?.review_status || "approved",
+        created_at: item?.created_at || "",
+    };
+}
+
 export default function MoviePage({ path, navigate }) {
     const params = useMemo(() => {
         const m = path.match(/^\/movie\/(movie|tv)\/(\d+)/);
@@ -237,7 +258,6 @@ export default function MoviePage({ path, navigate }) {
     const [data, setData] = useState(null);
     const [credits, setCredits] = useState(null);
     const [videos, setVideos] = useState([]);
-    const [reviews, setReviews] = useState([]);
     const [similar, setSimilar] = useState([]);
     const [watchProviders, setWatchProviders] = useState(null);
     const [watchRegion, setWatchRegion] = useState(DEFAULT_REGION);
@@ -259,6 +279,7 @@ export default function MoviePage({ path, navigate }) {
     const [reviewText, setReviewText] = useState("");
     const [reviewRating, setReviewRating] = useState(0);
     const [reviewSaving, setReviewSaving] = useState(false);
+    const [publicReviews, setPublicReviews] = useState([]);
 
     useEffect(() => {
         const syncAuth = () => setIsAuthorized(!!getJwt());
@@ -299,11 +320,10 @@ export default function MoviePage({ path, navigate }) {
 
         (async () => {
             try {
-                const [details, creditsRes, videosRes, reviewsRes, similarRes, providersRes] = await Promise.all([
+                const [details, creditsRes, videosRes, similarRes, providersRes] = await Promise.all([
                     fetchJson(`${TMDB_BASE}/${params.mediaType}/${params.id}?language=${LANG}`, BEARER),
                     fetchJson(`${TMDB_BASE}/${params.mediaType}/${params.id}/credits?language=${LANG}`, BEARER),
                     fetchJson(`${TMDB_BASE}/${params.mediaType}/${params.id}/videos?language=${LANG}`, BEARER),
-                    fetchJson(`${TMDB_BASE}/${params.mediaType}/${params.id}/reviews?language=${LANG}`, BEARER),
                     fetchJson(`${TMDB_BASE}/${params.mediaType}/${params.id}/similar?language=${LANG}`, BEARER),
                     fetchJson(`${TMDB_BASE}/${params.mediaType}/${params.id}/watch/providers`, BEARER),
                 ]);
@@ -313,7 +333,6 @@ export default function MoviePage({ path, navigate }) {
                 setData(details);
                 setCredits(creditsRes);
                 setVideos(Array.isArray(videosRes?.results) ? videosRes.results : []);
-                setReviews(Array.isArray(reviewsRes?.results) ? reviewsRes.results : []);
                 setSimilar(Array.isArray(similarRes?.results) ? similarRes.results : []);
                 setWatchProviders(providersRes?.results || null);
                 setWatchRegion(pickPreferredRegion(providersRes?.results || null));
@@ -326,11 +345,10 @@ export default function MoviePage({ path, navigate }) {
                         const seasonsData = await Promise.all(
                             validSeasons.map(async (season) => {
                                 try {
-                                    const seasonRes = await fetchJson(
+                                    return await fetchJson(
                                         `${TMDB_BASE}/tv/${params.id}/season/${season.season_number}?language=${LANG}`,
                                         BEARER
                                     );
-                                    return seasonRes;
                                 } catch {
                                     return season;
                                 }
@@ -344,13 +362,15 @@ export default function MoviePage({ path, navigate }) {
                             ...prev,
                             [seasonsData[0]?.season_number ?? 1]: true,
                         }));
-                        setSeasonsLoading(false);
                     }
                 }
             } catch (err) {
                 if (mounted) setError(String(err?.message || err));
             } finally {
-                if (mounted) setLoading(false);
+                if (mounted) {
+                    setLoading(false);
+                    setSeasonsLoading(false);
+                }
             }
         })();
 
@@ -358,6 +378,32 @@ export default function MoviePage({ path, navigate }) {
             mounted = false;
         };
     }, [params?.mediaType, params?.id]);
+
+    useEffect(() => {
+        if (!params) return;
+
+        let mounted = true;
+
+        (async () => {
+            try {
+                const res = await apiFetch(
+                    `/api/reviews/public?tmdb_id=${params.id}&media_type=${params.mediaType}`
+                );
+
+                if (!mounted) return;
+
+                const items = Array.isArray(res?.items) ? res.items : [];
+                const approvedOnly = items.filter((item) => (item?.review_status || "approved") === "approved");
+                setPublicReviews(approvedOnly.map(normalizeReviewItem));
+            } catch {
+                if (mounted) setPublicReviews([]);
+            }
+        })();
+
+        return () => {
+            mounted = false;
+        };
+    }, [params?.id, params?.mediaType]);
 
     useEffect(() => {
         if (!params || !isAuthorized) return;
@@ -414,7 +460,7 @@ export default function MoviePage({ path, navigate }) {
     }
 
     if (loading) {
-        return <div className="movie-page" style={{ color: "#fff", padding: 24 }}>Загрузка...</div>;
+        return <div className="movie-page" style={{ color: "#fff", padding: 24 }}>Загрузка.</div>;
     }
 
     if (error) {
@@ -461,7 +507,6 @@ export default function MoviePage({ path, navigate }) {
         videos.find((v) => v.site === "YouTube") ||
         null;
 
-    const similarItems = similar.slice(0, 12);
     const tmdbRating = Math.max(0, Math.min(5, Number(data.vote_average || 0) / 2));
     const tmdbRatingText = tmdbRating.toFixed(1);
 
@@ -494,7 +539,7 @@ export default function MoviePage({ path, navigate }) {
 
     const handleLibraryAction = async (kind) => {
         if (!isAuthorized) {
-            navigate("/auth");
+            navigate("/auth/login");
             return;
         }
 
@@ -524,7 +569,7 @@ export default function MoviePage({ path, navigate }) {
 
     const openReviewModal = () => {
         if (!isAuthorized) {
-            navigate("/auth");
+            navigate("/auth/login");
             return;
         }
         setReviewModalOpen(true);
@@ -534,7 +579,7 @@ export default function MoviePage({ path, navigate }) {
         e.preventDefault();
 
         if (!isAuthorized) {
-            navigate("/auth");
+            navigate("/auth/login");
             return;
         }
 
@@ -548,14 +593,18 @@ export default function MoviePage({ path, navigate }) {
             setReviewSaving(true);
             setError("");
 
-            await apiFetch("/api/library/rate", {
-                method: "POST",
-                body: JSON.stringify({
-                    tmdb_id: params.id,
-                    media_type: params.mediaType,
-                    rating: reviewRating,
-                }),
-            });
+            try {
+                await apiFetch("/api/library/rate", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        tmdb_id: params.id,
+                        media_type: params.mediaType,
+                        rating: reviewRating,
+                    }),
+                });
+            } catch {
+                // оценка не блокирует отправку отзыва
+            }
 
             await apiFetch("/api/reviews", {
                 method: "POST",
@@ -789,10 +838,7 @@ export default function MoviePage({ path, navigate }) {
 
     return (
         <div className="movie-page">
-            <div
-                className="movie-hero"
-                style={{ backgroundImage: `url(${hero})` }}
-            >
+            <div className="movie-hero" style={{ backgroundImage: `url(${hero})` }}>
                 <div className="movie-hero-overlay">
                     <div className="container hero-inner">
                         <h1 className="movie-title">{title}</h1>
@@ -817,15 +863,6 @@ export default function MoviePage({ path, navigate }) {
                                 <img src="/like.svg" alt="like" style={{ width: 18, height: 18 }} />
                             </button>
 
-                            <button
-                                className={`btn-ghost ${libraryStatus.watched ? "active" : ""}`}
-                                aria-label="Просмотрено"
-                                title="Просмотрено"
-                                onClick={() => handleLibraryAction("watched")}
-                            >
-                                <img src="/sound.svg" alt="watched" style={{ width: 18, height: 18 }} />
-                            </button>
-
                             <button className="btn-play" aria-label="Оставить отзыв" onClick={openReviewModal}>
                                 ✎ Отзыв
                             </button>
@@ -846,10 +883,7 @@ export default function MoviePage({ path, navigate }) {
                         <div className="cast-row">
                             {cast.length > 0 ? cast.map((person) => (
                                 <div key={person.cast_id || person.credit_id || person.id} className="cast-item">
-                                    <img
-                                        src={getProfile(person.profile_path)}
-                                        alt={person.name || ""}
-                                    />
+                                    <img src={getProfile(person.profile_path)} alt={person.name || ""} />
                                 </div>
                             )) : (
                                 <div className="body-text">Актёры не найдены.</div>
@@ -877,7 +911,12 @@ export default function MoviePage({ path, navigate }) {
                             >
                                 <div style={{ display: "flex", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
                                     <strong style={{ color: "#fff" }}>Ваш отзыв</strong>
-                                    {renderStars(myReview.rating || reviewRating || 0)}
+                                    <StarOval
+                                        score={myReview.rating || reviewRating || 0}
+                                        numberText={myReview.rating || reviewRating || 0 ? Number(myReview.rating || reviewRating || 0).toFixed(1) : "—"}
+                                        compact
+                                        showNumber
+                                    />
                                 </div>
                                 <p className="body-text" style={{ marginTop: 12 }}>
                                     {myReview.review_text || reviewText || "—"}
@@ -886,24 +925,24 @@ export default function MoviePage({ path, navigate }) {
                         )}
 
                         <div className="reviews-grid">
-                            {reviews.length > 0 ? reviews.slice(0, 4).map((r) => {
-                                const rating = 4.5;
+                            {publicReviews.length > 0 ? publicReviews.slice(0, 4).map((r) => {
+                                const rating = Math.max(0, Math.min(5, Number(r.rating || 0)));
 
                                 return (
                                     <article key={r.id} className="review-card">
                                         <div className="review-left">
                                             <strong className="review-author">{r.author || "Пользователь"}</strong>
-                                            <small className="review-origin muted-text">{r.author_details?.username || "TMDB"}</small>
+                                            <small className="review-origin muted-text">{r.author_details?.username || "MovieMash"}</small>
                                             <p className="review-text body-text">{r.content || ""}</p>
                                         </div>
 
                                         <div className="review-right">
                                             <StarOval
                                                 score={rating}
-                                                numberText={rating.toFixed(1)}
+                                                numberText={rating ? rating.toFixed(1) : "—"}
                                                 compact
                                                 showNumber
-                                                ariaLabel={`Рейтинг ${rating} из 5`}
+                                                ariaLabel={rating ? `Рейтинг ${rating} из 5` : "Рейтинг недоступен"}
                                             />
                                         </div>
                                     </article>
@@ -966,7 +1005,7 @@ export default function MoviePage({ path, navigate }) {
                         <div className="side-block">
                             <div className="side-row">
                                 <img src="/rate.svg" alt="rate" className="icon-movie" />
-                                <strong className="side-label">Рейтинги:</strong>
+                                <strong className="side-label">Рейтинг:</strong>
                             </div>
 
                             <div className="rating-row-block">
@@ -978,19 +1017,6 @@ export default function MoviePage({ path, navigate }) {
                                         compact
                                         showNumber
                                         ariaLabel={`Рейтинг TMDB ${tmdbRatingText} из 5`}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="rating-row-block">
-                                <div className="rating-row-lbl muted-text">MovieMash</div>
-                                <div className="rating-row-val">
-                                    <StarOval
-                                        score={4}
-                                        numberText="4.0"
-                                        compact
-                                        showNumber
-                                        ariaLabel="Рейтинг MovieMash 4 из 5"
                                     />
                                 </div>
                             </div>
@@ -1016,10 +1042,7 @@ export default function MoviePage({ path, navigate }) {
                         <div className="side-block">
                             <strong className="side-label">Режиссёр:</strong>
                             <div className="person">
-                                <img
-                                    src={getProfile(director?.profile_path)}
-                                    alt={director?.name || ""}
-                                />
+                                <img src={getProfile(director?.profile_path)} alt={director?.name || ""} />
                                 <div className="person-name">{director?.name || "Не указан"}</div>
                             </div>
                         </div>
@@ -1027,10 +1050,7 @@ export default function MoviePage({ path, navigate }) {
                         <div className="side-block">
                             <strong className="side-label">Музыка:</strong>
                             <div className="person">
-                                <img
-                                    src={getProfile(music?.profile_path)}
-                                    alt={music?.name || ""}
-                                />
+                                <img src={getProfile(music?.profile_path)} alt={music?.name || ""} />
                                 <div className="person-name">{music?.name || "Не указано"}</div>
                             </div>
                         </div>
@@ -1073,7 +1093,7 @@ export default function MoviePage({ path, navigate }) {
                                 background: "#1f1f1f",
                                 color: "#fff",
                                 textDecoration: "none",
-                                border: "1px solid rgba(255,255,255,0.08)"
+                                border: "1px solid rgba(255,255,255,0.08)",
                             }}
                         >
                             Смотреть в VK Video
@@ -1096,7 +1116,7 @@ export default function MoviePage({ path, navigate }) {
                                         border: "1px solid rgba(255,255,255,0.12)",
                                         borderRadius: 10,
                                         padding: "10px 12px",
-                                        outline: "none"
+                                        outline: "none",
                                     }}
                                 >
                                     {Object.keys(watchProviders).map((code) => (
@@ -1109,12 +1129,14 @@ export default function MoviePage({ path, navigate }) {
 
                             {regionWatch && uniqueProviders.length > 0 ? (
                                 <>
-                                    <div style={{
-                                        display: "flex",
-                                        flexWrap: "wrap",
-                                        gap: 12,
-                                        alignItems: "center"
-                                    }}>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            flexWrap: "wrap",
+                                            gap: 12,
+                                            alignItems: "center",
+                                        }}
+                                    >
                                         {visibleProviders.map((provider) => (
                                             <button
                                                 key={`${provider.provider_id}-${normalizeProviderName(provider.provider_name)}-${provider.logo_path || ""}`}
@@ -1130,7 +1152,7 @@ export default function MoviePage({ path, navigate }) {
                                                     background: "#1f1f1f",
                                                     color: "#fff",
                                                     border: "1px solid rgba(255,255,255,0.08)",
-                                                    cursor: "pointer"
+                                                    cursor: "pointer",
                                                 }}
                                             >
                                                 {provider.logo_path ? (
@@ -1157,7 +1179,7 @@ export default function MoviePage({ path, navigate }) {
                                                     borderRadius: 12,
                                                     background: providersExpanded ? "#2b2b2b" : "#1f1f1f",
                                                     color: "#fff",
-                                                    border: "1px solid rgba(255,255,255,0.08)"
+                                                    border: "1px solid rgba(255,255,255,0.08)",
                                                 }}
                                             >
                                                 {providersExpanded ? "Свернуть" : `Показать ещё ${hiddenCount}`}
@@ -1166,12 +1188,14 @@ export default function MoviePage({ path, navigate }) {
                                     </div>
 
                                     {providersExpanded && hiddenProviders.length > 0 && (
-                                        <div style={{
-                                            marginTop: 12,
-                                            display: "flex",
-                                            flexWrap: "wrap",
-                                            gap: 12
-                                        }}>
+                                        <div
+                                            style={{
+                                                marginTop: 12,
+                                                display: "flex",
+                                                flexWrap: "wrap",
+                                                gap: 12,
+                                            }}
+                                        >
                                             {hiddenProviders.map((provider) => (
                                                 <button
                                                     key={`${provider.provider_id}-${normalizeProviderName(provider.provider_name)}-${provider.logo_path || ""}`}
@@ -1187,7 +1211,7 @@ export default function MoviePage({ path, navigate }) {
                                                         background: "#1f1f1f",
                                                         color: "#fff",
                                                         border: "1px solid rgba(255,255,255,0.08)",
-                                                        cursor: "pointer"
+                                                        cursor: "pointer",
                                                     }}
                                                 >
                                                     {provider.logo_path ? (
@@ -1223,11 +1247,11 @@ export default function MoviePage({ path, navigate }) {
                 <AdBanner />
             </div>
 
-            {similarItems.length > 0 && (
+            {similar.length > 0 && (
                 <div className="container" style={{ marginTop: 40 }}>
                     <h3 className="section-title" style={{ color: "#fff" }}>Похожие</h3>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: 18 }}>
-                        {similarItems.map((item) => (
+                        {similar.slice(0, 12).map((item) => (
                             <article
                                 key={item.id}
                                 className="genre-card"
@@ -1310,7 +1334,7 @@ export default function MoviePage({ path, navigate }) {
                                 <textarea
                                     value={reviewText}
                                     onChange={(e) => setReviewText(e.target.value)}
-                                    placeholder="Напишите отзыв..."
+                                    placeholder="Напишите отзыв."
                                     rows={6}
                                     style={{
                                         width: "100%",

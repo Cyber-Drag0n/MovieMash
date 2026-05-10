@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const argon2 = require("argon2");
 const fileUpload = require("express-fileupload");
+const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const { query } = require("./db");
@@ -187,11 +188,62 @@ async function upsertUserRating(userId, tmdbId, mediaType, rating) {
     await query(
         `INSERT INTO user_ratings (user_id, tmdb_id, media_type, rating, rated_at)
          VALUES (?, ?, ?, ?, NOW())
-         ON DUPLICATE KEY UPDATE rating = VALUES(rating), rated_at = NOW()`,
+             ON DUPLICATE KEY UPDATE rating = VALUES(rating), rated_at = NOW()`,
         [userId, tmdbId, mediaType, safeRating]
     );
 
     return safeRating;
+}
+
+function buildResetPasswordUrl(token) {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    return `${frontendUrl}/auth/reset-password?token=${encodeURIComponent(token)}`;
+}
+
+function normalizeReviewRating(rating) {
+    const value = Number(rating || 0);
+    if (!Number.isFinite(value) || value <= 0) return null;
+    return Math.max(1, Math.min(5, Math.round(value)));
+}
+
+async function sendPasswordResetEmail(email, username, resetUrl) {
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = Number(process.env.SMTP_PORT || 587);
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    const smtpFrom = process.env.SMTP_FROM || smtpUser;
+
+    if (!smtpHost || !smtpUser || !smtpPass) {
+        console.log("[DEV] Password reset link for", email, "=>", resetUrl);
+        return { dev: true };
+    }
+
+    const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465,
+        auth: {
+            user: smtpUser,
+            pass: smtpPass,
+        },
+    });
+
+    await transporter.sendMail({
+        from: smtpFrom,
+        to: email,
+        subject: "Восстановление пароля MovieMash",
+        html: `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111;">
+                <h2>Восстановление пароля</h2>
+                <p>Здравствуйте, <b>${username || "пользователь"}</b>.</p>
+                <p>Чтобы сбросить пароль, перейдите по ссылке ниже:</p>
+                <p><a href="${resetUrl}" target="_blank" rel="noreferrer">${resetUrl}</a></p>
+                <p>Ссылка будет действовать ограниченное время.</p>
+            </div>
+        `,
+    });
+
+    return { dev: false };
 }
 
 app.get("/api/health", (req, res) => {
@@ -296,6 +348,129 @@ app.post("/api/auth/logout", authMiddleware, async (req, res) => {
     }
 });
 
+app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+        const { email } = req.body || {};
+        const safeEmail = String(email || "").trim();
+
+        if (!safeEmail) {
+            return res.status(400).json({ message: "email обязателен" });
+        }
+
+        const rows = await query(
+            `SELECT id, username, email
+             FROM users
+             WHERE email = ?
+                 LIMIT 1`,
+            [safeEmail]
+        );
+
+        const user = rows[0];
+
+        if (!user) {
+            return res.status(404).json({ message: "Пользователь с таким email не найден" });
+        }
+
+        await query(`DELETE FROM password_reset_tokens WHERE user_id = ?`, [user.id]);
+
+        const token = crypto.randomBytes(32).toString("hex");
+        const tokenHash = sha256(token);
+        const expiresHours = Number(process.env.RESET_PASSWORD_HOURS || 1);
+
+        await query(
+            `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at, used)
+             VALUES (?, ?, DATE_ADD(NOW(), INTERVAL ? HOUR), 0)`,
+            [user.id, tokenHash, expiresHours]
+        );
+
+        const resetUrl = buildResetPasswordUrl(token);
+        await sendPasswordResetEmail(user.email, user.username, resetUrl);
+
+        res.json({
+            ok: true,
+            message: "Письмо для восстановления отправлено",
+            ...(process.env.NODE_ENV !== "production" ? { reset_url: resetUrl } : {}),
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+        const { token, password, passwordRepeat } = req.body || {};
+
+        if (!token || !password || !passwordRepeat) {
+            return res.status(400).json({ message: "token, password и passwordRepeat обязательны" });
+        }
+
+        if (password !== passwordRepeat) {
+            return res.status(400).json({ message: "Пароли не совпадают" });
+        }
+
+        if (String(password).length < 6) {
+            return res.status(400).json({ message: "Пароль должен быть не короче 6 символов" });
+        }
+
+        const tokenHash = sha256(token);
+
+        const rows = await query(
+            `SELECT id, user_id, expires_at, used
+             FROM password_reset_tokens
+             WHERE token_hash = ?
+                 LIMIT 1`,
+            [tokenHash]
+        );
+
+        const tokenRow = rows[0];
+        if (!tokenRow) {
+            return res.status(400).json({ message: "Недействительный токен" });
+        }
+
+        if (tokenRow.used) {
+            return res.status(400).json({ message: "Токен уже использован" });
+        }
+
+        const exp = new Date(tokenRow.expires_at);
+        if (Number.isNaN(exp.getTime()) || exp.getTime() < Date.now()) {
+            return res.status(400).json({ message: "Токен истёк" });
+        }
+
+        const newHash = await argon2.hash(String(password), { type: argon2.argon2id });
+
+        await query(
+            `UPDATE users
+             SET password_hash = ?
+             WHERE id = ?`,
+            [newHash, tokenRow.user_id]
+        );
+
+        await query(
+            `UPDATE password_reset_tokens
+             SET used = 1
+             WHERE id = ?`,
+            [tokenRow.id]
+        );
+
+        await query(
+            `DELETE FROM user_sessions WHERE user_id = ?`,
+            [tokenRow.user_id]
+        );
+
+        await createNotification(
+            tokenRow.user_id,
+            "Пароль изменён",
+            "Ваш пароль был успешно обновлён",
+            "auth",
+            "/account"
+        );
+
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 app.get("/api/auth/me", authMiddleware, async (req, res) => {
     res.json({
         user: {
@@ -379,12 +554,8 @@ app.get("/api/account/reviews", authMiddleware, async (req, res) => {
     try {
         const rows = await query(
             `SELECT r.id, r.tmdb_id, r.media_type, r.review_text, r.review_status, r.created_at, r.updated_at,
-                    COALESCE(ur.rating, 0) AS rating
+                    COALESCE(r.rating, 0) AS rating
              FROM user_reviews r
-                      LEFT JOIN user_ratings ur
-                                ON ur.user_id = r.user_id
-                                    AND ur.tmdb_id = r.tmdb_id
-                                    AND ur.media_type = r.media_type
              WHERE r.user_id = ?
              ORDER BY r.created_at DESC
                  LIMIT 50`,
@@ -742,7 +913,7 @@ app.post("/api/library/mark-viewed", authMiddleware, async (req, res) => {
 });
 
 /* =========================
-   НОВОЕ: отзывы пользователя
+   Отзывы пользователя
    ========================= */
 
 app.get("/api/reviews/me", authMiddleware, async (req, res) => {
@@ -756,12 +927,8 @@ app.get("/api/reviews/me", authMiddleware, async (req, res) => {
 
         const rows = await query(
             `SELECT r.id, r.tmdb_id, r.media_type, r.review_text, r.review_status, r.created_at, r.updated_at,
-                    COALESCE(ur.rating, 0) AS rating
+                    COALESCE(r.rating, 0) AS rating
              FROM user_reviews r
-                      LEFT JOIN user_ratings ur
-                                ON ur.user_id = r.user_id
-                                    AND ur.tmdb_id = r.tmdb_id
-                                    AND ur.media_type = r.media_type
              WHERE r.user_id = ? AND r.tmdb_id = ? AND r.media_type = ?
                  LIMIT 1`,
             [req.user.id, tmdbId, mediaType]
@@ -778,10 +945,11 @@ app.post("/api/reviews", authMiddleware, async (req, res) => {
         const { tmdb_id, media_type, review_text, rating } = req.body || {};
 
         const tmdbId = Number(tmdb_id);
+        const mediaType = media_type;
         const text = String(review_text || "").trim();
-        const safeRating = Math.max(1, Math.min(5, Number(rating || 0)));
+        const safeRating = normalizeReviewRating(rating);
 
-        if (!tmdbId || !media_type || !text) {
+        if (!tmdbId || !mediaType || !text) {
             return res.status(400).json({ message: "tmdb_id, media_type и review_text обязательны" });
         }
 
@@ -795,27 +963,16 @@ app.post("/api/reviews", authMiddleware, async (req, res) => {
 
         await query(
             `INSERT INTO user_reviews
-             (user_id, tmdb_id, media_type, review_text, review_status, moderation_notes, moderated_at)
-             VALUES (?, ?, ?, ?, 'pending', NULL, NULL)
+             (user_id, tmdb_id, media_type, review_text, rating, review_status, moderation_notes, moderated_at)
+             VALUES (?, ?, ?, ?, ?, 'pending', NULL, NULL)
                  ON DUPLICATE KEY UPDATE
                                       review_text = VALUES(review_text),
+                                      rating = VALUES(rating),
                                       review_status = 'pending',
                                       moderation_notes = NULL,
                                       moderated_at = NULL,
                                       updated_at = CURRENT_TIMESTAMP`,
-            [req.user.id, tmdbId, mediaType, text]
-        );
-
-        if (safeRating) {
-            await upsertUserRating(req.user.id, tmdbId, mediaType, safeRating);
-        }
-
-        await createNotification(
-            req.user.id,
-            "Отзыв отправлен на модерацию",
-            "Ваш отзыв добавлен и ожидает проверки",
-            "library",
-            "/account"
+            [req.user.id, tmdbId, mediaType, text, safeRating]
         );
 
         res.json({ ok: true });
@@ -824,20 +981,111 @@ app.post("/api/reviews", authMiddleware, async (req, res) => {
     }
 });
 
-
 app.post("/api/library/rate", authMiddleware, async (req, res) => {
     try {
         const { tmdb_id, media_type, rating } = req.body || {};
         const tmdbId = Number(tmdb_id);
+        const mediaType = media_type;
         const safeRating = Math.max(1, Math.min(5, Number(rating || 0)));
 
-        if (!tmdbId || !media_type || !safeRating) {
+        if (!tmdbId || !mediaType || !safeRating) {
             return res.status(400).json({ message: "tmdb_id, media_type и rating обязательны" });
         }
 
         await upsertUserRating(req.user.id, tmdbId, mediaType, safeRating);
 
         res.json({ ok: true, rating: safeRating });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+app.get("/api/reviews/public", async (req, res) => {
+    try {
+        const tmdbId = Number(req.query.tmdb_id);
+        const mediaType = req.query.media_type;
+
+        if (!tmdbId || !mediaType) {
+            return res.status(400).json({ message: "tmdb_id и media_type обязательны" });
+        }
+
+        const rows = await query(
+            `SELECT r.id, r.tmdb_id, r.media_type, r.review_text, r.review_status, r.created_at,
+                    u.username, u.display_name,
+                    COALESCE(r.rating, 0) AS rating
+             FROM user_reviews r
+                      JOIN users u ON u.id = r.user_id
+             WHERE r.tmdb_id = ?
+               AND r.media_type = ?
+               AND r.review_status = 'approved'
+             ORDER BY r.created_at DESC`,
+            [tmdbId, mediaType]
+        );
+
+        res.json({
+            items: rows.map((row) => ({
+                id: row.id,
+                tmdb_id: row.tmdb_id,
+                media_type: row.media_type,
+                review_text: row.review_text,
+                review_status: row.review_status,
+                created_at: row.created_at,
+                username: row.username,
+                display_name: row.display_name,
+                rating: row.rating,
+            })),
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+app.patch("/api/support/messages/:id/reply", authMiddleware, async (req, res) => {
+    try {
+        if (!["admin", "moderator"].includes(req.user.role)) {
+            return res.status(403).json({ message: "Недостаточно прав" });
+        }
+
+        const messageId = Number(req.params.id);
+        const { reply_text, status } = req.body || {};
+        const safeReply = String(reply_text || "").trim();
+        const safeStatus = ["new", "in_progress", "closed"].includes(status) ? status : "closed";
+
+        if (!messageId || !safeReply) {
+            return res.status(400).json({ message: "reply_text обязателен" });
+        }
+
+        const rows = await query(
+            `SELECT id, user_id, subject, name
+             FROM support_messages
+             WHERE id = ?
+             LIMIT 1`,
+            [messageId]
+        );
+
+        const message = rows[0];
+        if (!message) {
+            return res.status(404).json({ message: "Обращение не найдено" });
+        }
+
+        await query(
+            `UPDATE support_messages
+             SET reply_text = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+             WHERE id = ?`,
+            [safeReply, safeStatus, messageId]
+        );
+
+        if (message.user_id) {
+            await createNotification(
+                message.user_id,
+                "Ответ от поддержки",
+                safeReply.length > 140 ? `${safeReply.slice(0, 140)}…` : safeReply,
+                "support",
+                "/account"
+            );
+        }
+
+        res.json({ ok: true });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
