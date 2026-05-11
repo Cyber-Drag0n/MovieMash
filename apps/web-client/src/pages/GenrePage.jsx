@@ -145,6 +145,10 @@ export default function GenrePage({ path, navigate }) {
         navigate(`/movie/${params.mediaType}/${item.id}`);
     };
 
+    const handleBack = () => {
+        navigate("/");
+    };
+
     return (
         <section style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 12px 60px", color: "#fff" }}>
             {error && (
@@ -170,6 +174,7 @@ export default function GenrePage({ path, navigate }) {
                     <strong>TMDB:</strong>
                     <span style={{ whiteSpace: "pre-wrap", color: "#fff" }}>{String(error)}</span>
                     <button
+                        type="button"
                         onClick={() => setError(null)}
                         style={{
                             marginLeft: 12,
@@ -187,7 +192,8 @@ export default function GenrePage({ path, navigate }) {
 
             <div style={{ marginBottom: 18 }}>
                 <button
-                    onClick={() => navigate("/media")}
+                    type="button"
+                    onClick={handleBack}
                     style={{
                         border: "none",
                         background: "#1f1f1f",
@@ -201,7 +207,8 @@ export default function GenrePage({ path, navigate }) {
                         gap: 8,
                     }}
                 >
-                    ← Назад
+                    <img src="/Arrow_left.svg" alt="Назад" style={{ width: 18, height: 18 }} />
+                    Назад
                 </button>
 
                 <h1 style={{ margin: 0, fontSize: 32, color: "#fff" }}>
@@ -280,6 +287,7 @@ export default function GenrePage({ path, navigate }) {
                 }}
             >
                 <button
+                    type="button"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page <= 1}
                     style={{
@@ -299,6 +307,7 @@ export default function GenrePage({ path, navigate }) {
                 </span>
 
                 <button
+                    type="button"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
                     style={{

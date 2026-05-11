@@ -1,3 +1,4 @@
+// apps/web-client/src/components/CategoriesCarousel.jsx
 import React, { useRef, useState, useMemo, useEffect } from "react";
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
@@ -145,7 +146,9 @@ export default function CategoriesCarousel({ navigate }) {
     const openGenre = (genreId) => {
         if (navigate) {
             navigate(`/media/genre/movie/${genreId}`);
+            return;
         }
+        window.location.href = `/media/genre/movie/${genreId}`;
     };
 
     return (
@@ -154,7 +157,9 @@ export default function CategoriesCarousel({ navigate }) {
                 <div className="genre-toast" role="alert">
                     <strong>TMDB:</strong>
                     <span>{error}</span>
-                    <button onClick={() => setError(null)} aria-label="Закрыть">✕</button>
+                    <button type="button" onClick={() => setError(null)} aria-label="Закрыть">
+                        ✕
+                    </button>
                 </div>
             )}
 
@@ -169,6 +174,7 @@ export default function CategoriesCarousel({ navigate }) {
 
                 <div className="categories-controls" role="tablist" aria-label="Навигация по категориям">
                     <button
+                        type="button"
                         className="ctrl-arrow"
                         onClick={onPrev}
                         disabled={page === 0}
@@ -185,6 +191,7 @@ export default function CategoriesCarousel({ navigate }) {
                     </div>
 
                     <button
+                        type="button"
                         className="ctrl-arrow"
                         onClick={onNext}
                         disabled={page === pages - 1}
@@ -233,6 +240,7 @@ export default function CategoriesCarousel({ navigate }) {
                                     <div className="card-footer">
                                         <span className="cat-title">{cat.title}</span>
                                         <button
+                                            type="button"
                                             className="cat-go"
                                             aria-label={`Перейти в ${cat.title}`}
                                             onClick={(e) => {
